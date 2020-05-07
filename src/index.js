@@ -110,230 +110,16 @@ class Controls extends React.Component {
     }
 }
 
-function Circles(props) {
-
-}
-
-class FrequencyPlot extends React.Component {
-
-    renderCircle(signal){
-        return(
-            <Circles
-                signal = {signal}
-            />
-        );
-    }
-
-    render(){
-     // console.log(this.props)
-     // console.log(this.props.signals)
-     const signals = this.props.signals;
-     
-        let circles = d3.range(signals.length).map(function (i) {
-            return {
-                // x:  (i+1)*width /6,
-                x: signals[i].frequency*50,
-                y: signals[i].amplitude*50,
-                id: i
-            };
-        });
-
-        console.log(circles)
-  
-        let color = d3.scaleOrdinal()
-            .range(d3.schemeCategory10);
-            
-        // console.log("color",color)
-        let freqSvg = d3.select("#svgFreqPlot")
-        let radius = 10;  
-
-        // Maybe we'll just have to manually write these out lol in the html div
-        // console.log(circles[0])
-
-        freqSvg.selectAll("circle")
-          .data(circles)
-          .enter().append("circle")
-            .attr("id", "circle_")
-            .attr("cx", function (d) { return d.x; })
-            .attr("cy", function (d) { return d.y; })
-            .attr("r", radius)
-            .style("fill", function (d, i) { console.log("Hi", d, i); return color(i); })
-            .on("mouseover", function (d) {d3.select(this).style("cursor", "move");})
-            .on("mouseout", function (d) {})
-            .call(d3.drag()
-                  .on("start", dragstarted)
-                  .on("drag", dragged)
-                  .on("end", dragended)
-                  );
-
-        // Somehow need to get the new cx and cy values then do a setState()
-        
-       /* 
-       const circleList = []; 
-       for (let i=0; i < signals.length; i++){
-           circleList.push(
-               
-               <circle key={"circle_" + signals[i].id}
-                       cx={ circles[i].x }
-                       cy={ circles[i].y }
-                       r ={ radius }
-                       
-                       style = {{ fill: function(circles ,i) {return color(i);} }}
-                       on = {{mouseover: function(circles) {d3.select(this).style("cursor","move");} }}
-                       on = {{mouseout: function(circles) {} }}
-                       call = { d3.drag()
-                                    .on("start", dragstarted)
-                                    .on("drag", dragged)
-                                    .on("end", dragended)                                
-                            }
-                        
-                       
-                       onMouseDown={ e => {
-                           console.log("clicked");
-                       }}
-                       
-
-                       onMouseDown={dragged}
-                       onMouseUp={dragended}
-               > 
-                  
-               </circle>
-           )
-       }
-       
-        for (let i=0; i < this.props.signals.length; i++){
-            circleList.push(
-                <div key={"circle_" + this.props.signals[i].id}> 
-                    {this.renderCircle(this.props.signals[i])} 
-                </div>
-            )
-        }
-        */
-//  {circleList}
-        return( 
-            <svg>
-               
-            </svg>
-        );
-    }
-}
-
-class SumPlot extends React.Component {
-
-    render(){
-
-        // This is brute force?
-        let sumSignals = []; 
-        // This sum doesn't work lmao, returns like NaN's
-
-        // This will break if the resolution breaks lool
-        for(let k = 0; k < 50; k++){
-            sumSignals.push([0,0]);
-        }
-
-        // Looping through all the signals
-        for (let i=0; i < this.props.signals.length; i++){
-
-            // console.log(this.props.signals[i].values)
-            // console.log(this.props.signals[i].values[0])
-            // console.log(this.props.signals[i].values[0][0])
-            
-            // console.log(sumSignals)
-
-            // Looping through the signal values
-            for(let j=0; j < this.props.signals[i].values.length; j++){
-
-                //console.log(this.props.signals[i].values)
-                console.log(this.props.signals[i].values[j])
-
-                //sumSignals[j] = this.props.signals[i].values[j];
-                sumSignals[j][0] = this.props.signals[i].values[j][0];
-                sumSignals[j][1] += this.props.signals[i].values[j][1];
-            }
-            
-        }
-
-        // There is a way to scale this to the svg dimenesions rather than hardcoding it
-        for (let n =0; n < sumSignals.length; n++){
-            sumSignals[n][1] = sumSignals[n][1] - (this.props.signals.length-1)*(400)
-        }
-        
-        // console.log("sumSignals:", sumSignals)
-
-        let lineGenerator = d3.line()
-          .curve(d3.curveBasis);
-
-        let pathData = lineGenerator(sumSignals);
-        // We should probably also store this in the React states in the Home class 
-
-        // Create scale
-        let xscale = d3.scaleLinear()
-        .domain([0, 100]) // This needs to be dynamic
-        .range([0, 800]);
-
-        let yscale = d3.scaleLinear()
-        .domain([0,100]) // This needs to be dynamic
-        .range([50, 750]);
-
-        // Add scales to axis
-        let x_axis = d3.axisBottom()
-        .scale(xscale);
-
-        let y_axis = d3.axisLeft()
-        .scale(yscale);
-
-        //The line SVG Path we draw
-
-        // If exists, update
-        if(document.getElementById("path_Sum")){
-            d3.select("#"+"path_Sum").attr("d", pathData)  
-               
-        }
-        
-        // Draws path if it doesn't exist
-        if(!document.getElementById("path_Sum")){
-             d3.select("#svgSumPlot").append("path")
-                .attr("id","path_Sum")
-                .attr("d", pathData)
-                .attr("stroke", "blue")
-                .attr("stroke-width", 2)
-                .attr("fill", "none")
-
-            const svgSumPlot = d3.select("#svgSumPlot")
-
-                svgSumPlot.append('g')
-                .attr("transform","translate(0,400)")
-                .call(x_axis);
-
-                svgSumPlot.append('g')
-                .attr("transform","translate(20,0)")
-                .call(y_axis);
-                
-        }
-
-        return(
-            <div></div>
-        );
-    }
-}
-
 class Home extends React.Component {
     constructor(props){
         super(props);
         this.state = {
-            signals: [
-                /*
-                {
+            signals: [{
                 id: 0,
                 amplitude: 1,
                 frequency: 1,
                 values: this.generateSignal(1,1),
-                },
-                */
-            ],
-            circles:[
-
-            ],
+            },],
         };
     }
 
@@ -378,7 +164,7 @@ class Home extends React.Component {
         svgID = svgID.concat(i.toString(10))
         pathID = pathID.concat(i.toString(10))
 
-        d3.select("#"+svgID).remove();
+        d3.select("#svgID").remove();
 
         this.setState({
             signals: signals,
@@ -399,14 +185,6 @@ class Home extends React.Component {
 
 // Maybe just put a square wave summation example, and just spam summing signals and see the performance (plot the newest individual signal, the sum of signal, and the frequency plot)
 
-
-// Priorities:
-// 1) Drag function -> fundamental functionality that can extend to other applications 
-// (e.g. phasor vectors, sum of signals frequency represntations, frequency domain etc.)
-// 2) Sum of signals (should be relatively easy to do)
-// 3) Animate the signals 
-// ^ (should be a cyclical permutation, or push the last element in the parth array to the first essentially)
-
     generateSignal(amplitude, frequency){
         // Generating path data
         // should preallocate array
@@ -422,7 +200,6 @@ class Home extends React.Component {
         {
             points[i] = [scale*i, scale*amplitude*Math.sin(frequency*i) + svgContainerHeight/2];
         }
-        // console.log(points)
         return points;
     }
 
@@ -483,10 +260,6 @@ class Home extends React.Component {
 
     }
 
-    onFreqPlotChange(event){
-        // This should be similar to handleChange()
-    }
-
     render() {
 
     const current = this.state.signals;
@@ -513,10 +286,6 @@ class Home extends React.Component {
         */
         console.log(current.length)
 
-       
-
-        
-
         for(let i = 0; i < current.length; i++){
 
             let svgID  = 'svg_'
@@ -532,30 +301,14 @@ class Home extends React.Component {
             // d3.select('path')
             // .attr('d', pathData);
 
-             // Create scale
-            let xscale = d3.scaleLinear()
-                        .domain([0, 100]) // This needs to be dynamic
-                        .range([0, 800]);
-
-            let yscale = d3.scaleLinear()
-                        .domain([0,100]) // This needs to be dynamic
-                        .range([50, 750]);
-
-            // Add scales to axis
-            let x_axis = d3.axisBottom()
-                .scale(xscale);
-
-            let y_axis = d3.axisLeft()
-                .scale(yscale);
-
             // For now, if svgID exists, then just redraw
             if(document.getElementById(svgID)){
                 // console.log("Hi from redraw")
                 // console.log(pathID)
-                d3.select("#"+pathID).attr("d", pathData)  
+                // d3.select("#pathID").attr("d", pathData)  
                 
                 // For some reason "path" works but "pathID" doesn't work
-                // d3.select("path").attr("d", pathData)      
+                d3.select("path").attr("d", pathData)      
             }
             
             // If svgID doesn't exist, then add it to the DOM
@@ -569,7 +322,7 @@ class Home extends React.Component {
                 .attr("position","absolute")
                 // .attr("y",i*svgContainerHeight)
                 //.attr("y", 200)
-                .attr("top","100")
+                .attr("top","100");
 
                 //The line SVG Path we draw
                 const lineGraph = svgContainer.append("path")
@@ -580,44 +333,11 @@ class Home extends React.Component {
                 .attr("stroke", "blue")
                 .attr("stroke-width", 2)
                 .attr("fill", "none")
-
-                svgContainer.append('g')
-                    .attr("transform","translate(0,400)")
-                    .call(x_axis);
-                
-                svgContainer.append('g')
-                .attr("transform","translate(20,0)")
-                    .call(y_axis);
-                
-
-                 // Create Axis for Frequency Plot
-                let xscale_freq = d3.scaleLinear()
-                        .domain([0, 100]) // This needs to be dynamic
-                        .range([50, 750]);
-
-                let yscale_freq = d3.scaleLinear()
-                        .domain([0,100]) // This needs to be dynamic
-                        .range([50, 750]);
-
-                // Add scales to axis
-                let x_axis_freq = d3.axisBottom()
-                .scale(xscale_freq);
-
-                let y_axis_freq = d3.axisLeft()
-                .scale(yscale_freq);
-
-                d3.select("#svgFreqPlot").append('g')
-                .attr("transform","translate(0,700)")
-                .call(x_axis_freq);
-
-                d3.select("#svgFreqPlot").append('g')
-                .attr("transform","translate(400,0)")
-                .call(y_axis_freq);    
             }          
         }
 
                                     
-// transform = {{translate:"(50%,50%)"}}>
+
     return (
             <div className = "container">
                 <div className = "canvas"></div>
@@ -641,36 +361,6 @@ class Home extends React.Component {
                 </div>
 
                 <div className = "freqPlots" id ="freqPlotsID" width="800" height="800">
-                    <svg id="svgFreqPlot" width="800" height="800" 
-                        style = {{
-                            position: "relative", 
-                            top: "0%",
-                            left: "50%",
-                            transform: "translate(0%, 0%)",
-                            border: '1px solid black'
-                            }}> 
-                    
-                        <FrequencyPlot
-                            signals = {current}
-                            onFreqPlotChange = {(event) => this.freqPlotChange(event)}
-                        />
-                    </svg>
-
-                </div>
-
-                <div className = "sumPlots" id ="sumPlotsID">
-                    <svg id="svgSumPlot" width="800" height="800" 
-                        style = {{
-                            position: "relative", 
-                            top: "0%",
-                            left: "50%",
-                            transform: "translate(0%, 0%)",
-                            border: '1px solid black'
-                            }}> 
-                        <SumPlot
-                            signals = {current}
-                        />
-                    </svg>
                 </div>
 
                 <div className = "controls">
@@ -688,6 +378,8 @@ class Home extends React.Component {
     }
   }
 
+
+
   // ========================================
   
   ReactDOM.render(
@@ -695,7 +387,7 @@ class Home extends React.Component {
     document.getElementById('root')
   );
   
-/*
+
         // Creating the Frequency Domain Plot
         const freqContainer = d3.select("#freqPlotsID").append("svg")
         .attr("id", 'svgFreqPlot')
@@ -705,13 +397,11 @@ class Home extends React.Component {
         // console.log("freqContainer:")
         // console.log(freqContainer)
         
-        let svg = d3.select("svg")
-                    .attr("style","border: 1px solid black")
+        let svg = d3.select("svg"),
         // width = +svg.attr("width"),
         // height = +svg.attr("height"),
-        let radius = 10;
+        radius = 10;
         
-
         let circles = d3.range(1).map(function (i) {
             return {
                 // x:  (i+1)*width /6,
@@ -738,7 +428,6 @@ class Home extends React.Component {
                   .on("drag", dragged)
                   .on("end", dragended)
                   );
-*/
 
 // Drag functions
 function dragstarted(d) {
@@ -746,10 +435,8 @@ function dragstarted(d) {
 }
 
 function dragged(d) {
-    // console.log(d3.event)
+    console.log(d3.event)
     console.log(d); 
-    // console.log(this)
-
     d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
 }
 

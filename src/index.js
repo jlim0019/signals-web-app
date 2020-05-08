@@ -110,8 +110,35 @@ class Controls extends React.Component {
     }
 }
 
-function Circles(props) {
+class Circles extends React.Component {
 
+    handleMouseDown(e){
+        console.log("clicked")
+        console.log(e)
+
+    }
+
+    handleMouseUp(){
+        console.log("click released")
+
+    }
+
+    render(){
+        return(
+            <circle
+                id = {"circle_"+this.props.signal.id}
+                cx = {50}
+                cy = {50}
+                r = {10}
+                fill = "black"
+                stroke = "black"
+                stroke-width="1"
+                onMouseDown={this.handleMouseDown}
+                onMouseUp={this.handleMouseUp}
+            />
+        );
+    }
+    
 }
 
 class FrequencyPlot extends React.Component {
@@ -149,7 +176,7 @@ class FrequencyPlot extends React.Component {
 
         // Maybe we'll just have to manually write these out lol in the html div
         // console.log(circles[0])
-
+/*
         freqSvg.selectAll("circle")
           .data(circles)
           .enter().append("circle")
@@ -165,11 +192,11 @@ class FrequencyPlot extends React.Component {
                   .on("drag", dragged)
                   .on("end", dragended)
                   );
-
+*/
         // Somehow need to get the new cx and cy values then do a setState()
-        
+        const circleList = []; 
        /* 
-       const circleList = []; 
+       
        for (let i=0; i < signals.length; i++){
            circleList.push(
                
@@ -200,19 +227,18 @@ class FrequencyPlot extends React.Component {
                </circle>
            )
        }
+       */
        
         for (let i=0; i < this.props.signals.length; i++){
             circleList.push(
-                <div key={"circle_" + this.props.signals[i].id}> 
-                    {this.renderCircle(this.props.signals[i])} 
-                </div>
+                    this.renderCircle(this.props.signals[i])
             )
         }
-        */
-//  {circleList}
+        
+//  
         return( 
             <svg>
-               
+               {circleList}
             </svg>
         );
     }

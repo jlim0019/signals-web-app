@@ -37,7 +37,7 @@ function Dials(props) {
                     min={-10} 
                     max ={10} 
                     value = {props.signal.amplitude} 
-                    step={1}
+                    step={0.1}
                     onChange={props.onChange}
                     /> 
                     <input
@@ -59,7 +59,7 @@ function Dials(props) {
                         min={-10} 
                         max ={10} 
                         value = {props.signal.frequency} 
-                        step={1}
+                        step={0.1}
                         onChange={props.onChange}
                     /> 
                     <input
@@ -110,34 +110,62 @@ class Controls extends React.Component {
     }
 }
 
-class Circles extends React.Component {
+function Circles(props) {
+// class Circles extends React.Component {
+    /*
+    constructor() {
+        super()
+        this.state = {
+            coords: {
+                 x: this.props.signal.frequency*50,
+                 y: this.props.signal.amplitude*50
+                //x: 50,
+                //y: 50
+            },
+                
+        }
+        
+    }
+    */
 
-    handleMouseDown(e){
-        console.log("clicked")
-        console.log(e)
+    /*
+    // Don't actually need this???
+    // Calls when the DOM is renders the circle
+    componentDidMount() {
+        let thisCircle = document.getElementById("circle_"+this.props.signal.id)
+        thisCircle.addEventListener('mousemove', this.handleMouseMove.bind(this), false);
 
+        console.log(this)
+        console.log(this.dragging)
     }
 
-    handleMouseUp(){
-        console.log("click released")
-
+    componentWillUnmount() {
+        //Don't forget to unlisten!
+        let thisCircle = document.getElementById("circle_"+this.props.signal.id)
+        thisCircle.removeEventListener('mousemove', this.handleMouseMove, false);
     }
+    */
 
-    render(){
+    
+
+//   render(){
         return(
             <circle
-                id = {"circle_"+this.props.signal.id}
-                cx = {50}
-                cy = {50}
-                r = {10}
+                id = {"circle_"+props.signal.id}
+                signal_id = {props.signal.id}
+                cx = {props.signal.frequency*800}
+                cy = {props.signal.amplitude*200}
+                r = {50}
                 fill = "black"
                 stroke = "black"
                 stroke-width="1"
-                onMouseDown={this.handleMouseDown}
-                onMouseUp={this.handleMouseUp}
+                onMouseDown={props.onMouseDown}
+                onMouseUp={props.onMouseUp}
+                onMouseOut={props.onMouseUp}
+                onMouseMove={props.onMouseMove}
             />
         );
-    }
+    //}
     
 }
 
@@ -147,6 +175,10 @@ class FrequencyPlot extends React.Component {
         return(
             <Circles
                 signal = {signal}
+                onMouseDown = {(event) => this.props.onMouseDown(event)}
+                onMouseUp = {(event) => this.props.onMouseUp(event)}
+                onMouseOut = {(event) => this.props.onMouseUp(event)}
+                onMouseMove = {(event) => this.props.onMouseMove(event)}
             />
         );
     }
@@ -235,7 +267,38 @@ class FrequencyPlot extends React.Component {
             )
         }
         
-//  
+        // Should probably check both axis
+        if(!document.getElementById("x_axis_freqPlot")){
+
+            // Create Axis for Frequency Plot
+            let xscale_freq = d3.scaleLinear()
+                    .domain([-3.5, 3.5]) // This needs to be dynamic
+                    .range([50, 750]);
+
+            let yscale_freq = d3.scaleLinear()
+                    .domain([3.5,-3.5]) // This needs to be dynamic
+                    .range([50, 750]);
+
+            // Add scales to axis
+            let x_axis_freq = d3.axisBottom()
+            .scale(xscale_freq);
+
+            let y_axis_freq = d3.axisLeft()
+            .scale(yscale_freq);
+            
+            d3.select("#svgFreqPlot").append('g')
+            .attr("id","x_axis_freqPlot")
+            .attr("transform","translate(0,400)")
+            .call(x_axis_freq);
+
+            d3.select("#svgFreqPlot").append('g')
+            .attr("id","y_axis_freqPlot")
+            .attr("transform","translate(400,0)")
+            .call(y_axis_freq); 
+
+        }
+
+
         return( 
             <svg>
                {circleList}
@@ -253,7 +316,7 @@ class SumPlot extends React.Component {
         // This sum doesn't work lmao, returns like NaN's
 
         // This will break if the resolution breaks lool
-        for(let k = 0; k < 50; k++){
+        for(let k = 0; k < 800; k++){
             sumSignals.push([0,0]);
         }
 
@@ -270,7 +333,7 @@ class SumPlot extends React.Component {
             for(let j=0; j < this.props.signals[i].values.length; j++){
 
                 //console.log(this.props.signals[i].values)
-                console.log(this.props.signals[i].values[j])
+                // console.log(this.props.signals[i].values[j])
 
                 //sumSignals[j] = this.props.signals[i].values[j];
                 sumSignals[j][0] = this.props.signals[i].values[j][0];
@@ -287,7 +350,7 @@ class SumPlot extends React.Component {
         // console.log("sumSignals:", sumSignals)
 
         let lineGenerator = d3.line()
-          .curve(d3.curveBasis);
+          .curve(d3.curveNatural);
 
         let pathData = lineGenerator(sumSignals);
         // We should probably also store this in the React states in the Home class 
@@ -354,13 +417,17 @@ class Home extends React.Component {
                 amplitude: 1,
                 frequency: 1,
                 values: this.generateSignal(1,1),
+                dragging: false,    
                 },
                 */
             ],
             circles:[
-
             ],
         };
+        // This binding is necessary to make `this` work in the callback   
+        this.handleMouseDown = this.handleMouseDown.bind(this);
+        this.handleMouseUp = this.handleMouseUp.bind(this);
+        this.handleMouseMove = this.handleMouseMove.bind(this);
     }
 
     // https://stackoverflow.com/questions/47581967/reactjs-failed-to-compile-objects-is-not-defined-no-undef
@@ -378,6 +445,7 @@ class Home extends React.Component {
                 amplitude: 1,   // Should be user input
                 frequency: 1,   // Should be user input
                 values: this.generateSignal(1,1),
+                dragging: false,    
             },]),
         });        
 
@@ -388,7 +456,9 @@ class Home extends React.Component {
         // Need to find signal id from the array and delete, then re-update id's
         const signals = this.state.signals;
 
+
         console.log("Hi from removeSignal");    
+        console.log(i)
         console.log("Before: ", signals);
         signals.splice(i,1)
         console.log("After:", signals);
@@ -441,12 +511,14 @@ class Home extends React.Component {
         const svgContainerHeight = 800;
         const svgContainerWidth = 800;
         let scale = 100;
-        let resolution = 50;
+        let resolution = 800;
 
+        // Frequency is in Hz
         // This is bascially an inverse FFT lmao
+        // doing just i++ plots 800 points and it's really laggy
         for(let i = 0; i< resolution; i++)
         {
-            points[i] = [scale*i, scale*amplitude*Math.sin(frequency*i) + svgContainerHeight/2];
+            points[i] = [i*5, scale*amplitude*Math.sin(frequency*i) + svgContainerHeight/2];
         }
         // console.log(points)
         return points;
@@ -509,9 +581,119 @@ class Home extends React.Component {
 
     }
 
-    onFreqPlotChange(event){
-        // This should be similar to handleChange()
+    
+    handleMouseDown(e){
+        console.log("clicked")
+        // console.log(this)
+        // console.log(this.state.coords)
+        // console.log(this.state.dragging)
+        /*
+        this.state.dragging = true;
+        //Set coords
+        this.coords = {
+            x: e.pageX,
+            y: e.pageY
+        }
+        console.log(this.state.coords)
+        */
+
+        e.preventDefault();
+        const signals = this.state.signals;
+        const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
+        
+        // let  rect = e.target.getBoundingClientRect(); 
+
+        signals[signalID].dragging = true;
+        // signals[signalID].amplitude = Math.round(e.clientY - rect.top - signals[signalID].amplitude);
+        // signals[signalID].frequency = Math.round(e.clientX - rect.left - signals[signalID].frequency);
+
+        // console.log(signals[signalID].amplitude)
+        // console.log(signals[signalID].frequency)
+
+        this.setState({
+            signals: signals,   
+            }
+        );   
+
+        
     }
+
+    handleMouseUp(e){
+        console.log("click released")
+        // this.state.dragging = false;
+        // this.state.coords = {};
+
+        const signals = this.state.signals;
+        const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
+        console.log(e.type)
+        if(e.type == 'mouseout' && signals[signalID].dragging) {
+            console.log("mouse went out out")
+            return;
+        }
+
+        signals[signalID].dragging = false;
+        
+        this.setState({
+            signals: signals,   
+            }
+        );
+        
+    }
+
+    handleMouseMove(e) {
+
+        const signals = this.state.signals;
+        const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
+
+        //If we are dragging
+          if (signals[signalID].dragging) {
+              e.preventDefault();
+
+              console.log(e)
+              console.log(e.target)
+              console.log("clientX:",e.clientX)
+              console.log("clientY:",e.clientY)
+              // console.log(e.target.parentNode.parentNode)
+            let  rect = e.target.parentNode.parentNode.getBoundingClientRect();  
+
+            console.log(rect.left);
+            console.log(rect.top);
+
+            //Get mouse change differential
+            //let xDiff = this.state.coords.x - e.clientX,
+           //     yDiff = this.state.coords.y - e.clientY;
+            //Update to our new coordinates
+
+            //    signals[signalID].frequency = Math.round(e.clientX) - signals[signalID].frequency;
+            //    signals[signalID].amplitude = Math.round(e.clientY) - signals[signalID].amplitude;
+            
+            // Maybe should seperate coordinates and freq/amp values
+             signals[signalID].frequency = (e.clientX - rect.left)/800;
+             signals[signalID].amplitude = (e.clientY - rect.top)/200;
+             signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency);
+
+            //Adjust our x,y based upon the x/y diff from before
+             //   this.state.coords.x = this.state.coords.x - xDiff;       
+             //   this.state.coords.y = this.state.coords.y - yDiff;
+            //Re-render
+            //console.log(this.state.coords.x)
+            //console.log(this.state.coords.y)
+            //this.setState(this.state);  
+
+            // We should set position limits
+
+            console.log(signals[signalID].frequency)
+            console.log(signals[signalID].amplitude)
+
+            console.log(this)
+
+            this.setState({
+                signals: signals,   
+                }
+            );  
+        }
+    }
+    
 
     render() {
 
@@ -537,11 +719,7 @@ class Home extends React.Component {
         d3.select(pathID)
         .attr('d', pathData);
         */
-        console.log(current.length)
-
-       
-
-        
+        // console.log(current.length)
 
         for(let i = 0; i < current.length; i++){
 
@@ -551,7 +729,7 @@ class Home extends React.Component {
             pathID = pathID.concat(i.toString(10))
 
             let lineGenerator = d3.line()
-                                  .curve(d3.curveBasis);
+                                  .curve(d3.curveNatural);
 
             let pathData = lineGenerator(current[i].values);
 
@@ -560,11 +738,11 @@ class Home extends React.Component {
 
              // Create scale
             let xscale = d3.scaleLinear()
-                        .domain([0, 100]) // This needs to be dynamic
+                        .domain([0, 2]) // This needs to be dynamic
                         .range([0, 800]);
 
             let yscale = d3.scaleLinear()
-                        .domain([0,100]) // This needs to be dynamic
+                        .domain([-3.5,3.5]) // This needs to be dynamic
                         .range([50, 750]);
 
             // Add scales to axis
@@ -579,9 +757,7 @@ class Home extends React.Component {
                 // console.log("Hi from redraw")
                 // console.log(pathID)
                 d3.select("#"+pathID).attr("d", pathData)  
-                
-                // For some reason "path" works but "pathID" doesn't work
-                // d3.select("path").attr("d", pathData)      
+                  
             }
             
             // If svgID doesn't exist, then add it to the DOM
@@ -592,7 +768,8 @@ class Home extends React.Component {
                 .attr("id",svgID)
                 .attr("width", svgContainerWidth)
                 .attr("height", svgContainerHeight)
-                .attr("position","absolute")
+                .attr("style","position: absolute", "left: 5%")
+                .attr("style", "border: 1px solid black")
                 // .attr("y",i*svgContainerHeight)
                 //.attr("y", 200)
                 .attr("top","100")
@@ -615,38 +792,14 @@ class Home extends React.Component {
                 .attr("transform","translate(20,0)")
                     .call(y_axis);
                 
-
-                 // Create Axis for Frequency Plot
-                let xscale_freq = d3.scaleLinear()
-                        .domain([0, 100]) // This needs to be dynamic
-                        .range([50, 750]);
-
-                let yscale_freq = d3.scaleLinear()
-                        .domain([0,100]) // This needs to be dynamic
-                        .range([50, 750]);
-
-                // Add scales to axis
-                let x_axis_freq = d3.axisBottom()
-                .scale(xscale_freq);
-
-                let y_axis_freq = d3.axisLeft()
-                .scale(yscale_freq);
-
-                d3.select("#svgFreqPlot").append('g')
-                .attr("transform","translate(0,700)")
-                .call(x_axis_freq);
-
-                d3.select("#svgFreqPlot").append('g')
-                .attr("transform","translate(400,0)")
-                .call(y_axis_freq);    
             }          
         }
 
-                                    
+        
+
 // transform = {{translate:"(50%,50%)"}}>
     return (
             <div className = "container">
-                <div className = "canvas"></div>
 
                 <div className = "navbar">
                     <div className = "tab" id="home"> Home </div>
@@ -654,31 +807,27 @@ class Home extends React.Component {
                     <div className = "tab"> Topic 2 </div>
                     <div className = "tab"> Topic 3 </div> 			
                 </div>
-                
-                <div className = "navbar">
-                    <div className = "tab" id="home"> Home </div>
-                    <div className = "tab"> Topic 1 </div>
-                    <div className = "tab"> Topic 2 </div>
-                    <div className = "tab"> Topic 3 </div> 			
-                </div>
-
 
                 <div className = "sinePlots" id ="sinePlotsID">
                 </div>
 
-                <div className = "freqPlots" id ="freqPlotsID" width="800" height="800">
-                    <svg id="svgFreqPlot" width="800" height="800" 
+                <div className = "freqPlots" id ="freqPlotsID">
+                    <svg id="svgFreqPlot" width="800" height="800"  
                         style = {{
                             position: "relative", 
                             top: "0%",
-                            left: "50%",
+                            left: "0%",
                             transform: "translate(0%, 0%)",
-                            border: '1px solid black'
+                            border: '1px solid black',
+                            
                             }}> 
                     
                         <FrequencyPlot
                             signals = {current}
-                            onFreqPlotChange = {(event) => this.freqPlotChange(event)}
+                            onMouseDown = {(event) => this.handleMouseDown(event)}
+                            onMouseUp = {(event) => this.handleMouseUp(event)}
+                            onMouseOut = {(event) => this.handleMouseUp(event)}
+                            onMouseMove = {(event) => this.handleMouseMove(event)}
                         />
                     </svg>
 
@@ -689,7 +838,7 @@ class Home extends React.Component {
                         style = {{
                             position: "relative", 
                             top: "0%",
-                            left: "50%",
+                            left: "0%",
                             transform: "translate(0%, 0%)",
                             border: '1px solid black'
                             }}> 

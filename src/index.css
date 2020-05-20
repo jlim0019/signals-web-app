@@ -15,6 +15,13 @@ code {
 #home {
     padding: 12px 2px 12px 2px;
 }
+
+.container{
+    display:grid;
+    width: 100vw;
+    height: 100vh;
+}
+
 .navbar{
     position: absolute; 
     /* z-index: 10; */
@@ -23,7 +30,6 @@ code {
     background-image: linear-gradient(to right, white, black);
     left: 0px; 
     right: 0px;
-    height: device-height;
     width: auto; /* should make positioning relative to screen size */
 }
 
@@ -91,7 +97,32 @@ code {
 }
 
 .sinePlots{
-    background-color: grey;
+    background-color: beige;
+    width: 900px;
+    overflow: auto;
+    grid-row: 1 / 3;
+    grid-column: 1;
+    left: 10%;
+    /* 
     height: 200;
     width: 200;
+    */
 }
+
+.freqPlots{
+    background-color: skyblue;
+    height: 800 px;
+    width: 800 px;
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.sumPlots{
+    background-color: wheat;
+    height: 800 px;
+    width: 800 px;
+    grid-column: 2;
+    grid-row: 2;
+    
+}
+

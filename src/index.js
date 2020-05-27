@@ -34,8 +34,8 @@ function Dials(props) {
                     signal_id = {props.signal.id}
                     input_type = {"AmpDial"}
                     type ="range" 
-                    min={-10} 
-                    max ={10} 
+                    min={-5} 
+                    max ={5} 
                     value = {props.signal.amplitude} 
                     step={0.1}
                     onChange={props.onChange}
@@ -45,8 +45,8 @@ function Dials(props) {
                     signal_id = {props.signal.id}
                     input_type = {"AmpText"}
                     type = "number"  
-                    min = {-10}
-                    max = {10}
+                    min = {-5}
+                    max = {5}
                     onChange={props.onChange}
                     />
                 </div>
@@ -56,8 +56,8 @@ function Dials(props) {
                         signal_id = {props.signal.id}
                         input_type = {"FreqDial"}
                         type ="range" 
-                        min={-10} 
-                        max ={10} 
+                        min={-4} 
+                        max ={4} 
                         value = {props.signal.frequency} 
                         step={0.1}
                         onChange={props.onChange}
@@ -67,8 +67,8 @@ function Dials(props) {
                         signal_id = {props.signal.id}
                         input_type = {"FreqText"}
                         type = "number"  
-                        min = {-10}
-                        max = {10}
+                        min = {-4}
+                        max = {4}
                         onChange={props.onChange}
                     />
                 </div>      
@@ -153,9 +153,10 @@ function Circles(props) {
             <circle
                 id = {"circle_"+props.signal.id}
                 signal_id = {props.signal.id}
-                cx = {props.signal.frequency*800}
-                cy = {props.signal.amplitude*200}
-                r = {50}
+                cx = {(props.signal.frequency)*100}
+                cy = {(props.signal.amplitude)*100}
+                transform="translate(400,400) scale(1,-1)"
+                r = {20}
                 fill = "black"
                 stroke = "black"
                 stroke-width="1"
@@ -267,7 +268,7 @@ class FrequencyPlot extends React.Component {
             )
         }
         
-        // Should probably check both axis
+        // Should probably check both axis if they exist before appending
         if(!document.getElementById("x_axis_freqPlot")){
 
             // Create Axis for Frequency Plot
@@ -442,9 +443,9 @@ class Home extends React.Component {
         this.setState({
             signals: signals.concat([{  // Just concatenating array of JSON
                 id: signals.length,
-                amplitude: 1,   // Should be user input
-                frequency: 1,   // Should be user input
-                values: this.generateSignal(1,1),
+                amplitude: 0,   // Should be user input
+                frequency: 0,   // Should be user input
+                values: this.generateSignal(0,0),
                 dragging: false,    
             },]),
         });        
@@ -510,17 +511,23 @@ class Home extends React.Component {
         // decide scaling later i guess
         const svgContainerHeight = 800;
         const svgContainerWidth = 800;
-        let scale = 100;
-        let resolution = 800;
+        let scale = -100;
+
+        // Sampling frequency: 50Hz ?
+        let Fs = 80;
+        // let Ts = 1/Fs;
+
+        let Ts = Math.PI / 200;
 
         // Frequency is in Hz
         // This is bascially an inverse FFT lmao
         // doing just i++ plots 800 points and it's really laggy
-        for(let i = 0; i< resolution; i++)
+        // i is basically our t (1 unit of time)
+        for(let i = 0; i< svgContainerWidth; i++)
         {
-            points[i] = [i*5, scale*amplitude*Math.sin(frequency*i) + svgContainerHeight/2];
+            points[i] = [i, scale*amplitude*Math.sin(Ts*frequency*i) + svgContainerHeight/2];
         }
-        // console.log(points)
+        console.log(points)
         return points;
     }
 
@@ -545,7 +552,7 @@ class Home extends React.Component {
         const signals = this.state.signals;
         const inputType = event.target.getAttribute('input_type');
         const signalID = event.target.getAttribute('signal_id'); // Signal ID Number
-        let value = parseInt(event.target.value);   
+        let value = parseFloat(event.target.value);   
 
         // Text Form can exceed the maximum limit of 10?
 
@@ -668,8 +675,8 @@ class Home extends React.Component {
             //    signals[signalID].amplitude = Math.round(e.clientY) - signals[signalID].amplitude;
             
             // Maybe should seperate coordinates and freq/amp values
-             signals[signalID].frequency = (e.clientX - rect.left)/800;
-             signals[signalID].amplitude = (e.clientY - rect.top)/200;
+             signals[signalID].frequency = (e.clientX - rect.left - 400) / 100;
+             signals[signalID].amplitude = - (e.clientY - rect.top - 400) / 100;
              signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency);
 
             //Adjust our x,y based upon the x/y diff from before
@@ -789,7 +796,7 @@ class Home extends React.Component {
                     .call(x_axis);
                 
                 svgContainer.append('g')
-                .attr("transform","translate(20,0)")
+                .attr("transform","translate(30,0)")
                     .call(y_axis);
                 
             }          

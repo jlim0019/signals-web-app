@@ -12,6 +12,17 @@ ReactDOM.render(<App />, document.getElementById('root'));
 // Learn more about service workers: https://bit.ly/CRA-PWA
 serviceWorker.unregister();
 
+/* Known Bugs:
+- removeSignal() only works if you starting removing from the last signal
+- if you move/drag the mouse too fast the circle doesn't catch up
+- phase dial for DC signal updates amplitude when it's not meant to
+- negative phase circle is meant to move in opposite direction when dragged (cartersian coordinate problem)
+
+
+- Changing frequency does update the signal (when it's not meant to)
+^ But this is deliberate because we haven't updated FreqPlot functionality to fit with Fourier Plots
+*/
+
 const svgContainerWidth = 800;
 const svgContainerHeight = 800;
 
@@ -26,6 +37,7 @@ function Dials(props) {
             <div className="signal-props">
                 <div>Amplitude: {props.signal.amplitude}</div>
                 <div>Frequency: {props.signal.frequency}</div>
+                <div>Phase: {props.signal.phase}</div>
             </div>
             <div className = "signal-dials">
                 <div>
@@ -71,7 +83,29 @@ function Dials(props) {
                         max = {4}
                         onChange={props.onChange}
                     />
-                </div>      
+                </div>
+                <div>
+                    <input 
+                        id = {"signal" + props.signal.id + "_PhaseDial" }
+                        signal_id = {props.signal.id}
+                        input_type = {"PhaseDial"}
+                        type ="range" 
+                        min={-180} 
+                        max ={180} 
+                        value = {props.signal.phase} 
+                        step={1}
+                        onChange={props.onChange}
+                    /> 
+                    <input
+                        id = {"signal" + props.signal.id + "_PhaseText" }
+                        signal_id = {props.signal.id}
+                        input_type = {"PhaseText"}
+                        type = "number"  
+                        min = {-180}
+                        max = {180}
+                        onChange={props.onChange}
+                    />
+                </div>        
             </div>
         </div>
     );
@@ -111,50 +145,12 @@ class Controls extends React.Component {
 }
 
 function Circles(props) {
-// class Circles extends React.Component {
-    /*
-    constructor() {
-        super()
-        this.state = {
-            coords: {
-                 x: this.props.signal.frequency*50,
-                 y: this.props.signal.amplitude*50
-                //x: 50,
-                //y: 50
-            },
-                
-        }
-        
-    }
-    */
-
-    /*
-    // Don't actually need this???
-    // Calls when the DOM is renders the circle
-    componentDidMount() {
-        let thisCircle = document.getElementById("circle_"+this.props.signal.id)
-        thisCircle.addEventListener('mousemove', this.handleMouseMove.bind(this), false);
-
-        console.log(this)
-        console.log(this.dragging)
-    }
-
-    componentWillUnmount() {
-        //Don't forget to unlisten!
-        let thisCircle = document.getElementById("circle_"+this.props.signal.id)
-        thisCircle.removeEventListener('mousemove', this.handleMouseMove, false);
-    }
-    */
-
-    
-
-//   render(){
         return(
             <circle
                 id = {"circle_"+props.signal.id}
                 signal_id = {props.signal.id}
-                cx = {(props.signal.frequency)*100}
-                cy = {(props.signal.amplitude)*100}
+                cx = {(props.signal.frequency)* (800/8)}
+                cy = {(props.signal.amplitude)*(800/8)}
                 transform="translate(400,400) scale(1,-1)"
                 r = {20}
                 fill = "black"
@@ -166,8 +162,288 @@ function Circles(props) {
                 onMouseMove={props.onMouseMove}
             />
         );
-    //}
     
+}
+
+function FourierCirclesMagPos(props) {
+    return(
+        <circle
+            id = {"circle_"+props.signal.id}
+            signal_id = {props.signal.id}
+            cx = {(props.signal.id)*(800/8)}
+            cy = {(props.signal.amplitude)*(800/8)}
+            transform="translate(400,400) scale(1,-1)"
+            r = {20}
+            fill = "black"
+            stroke = "black"
+            stroke-width="1"
+            onMouseDown={props.onMouseDown}
+            onMouseUp={props.onMouseUp}
+            onMouseOut={props.onMouseUp}
+            onMouseMove={props.onMouseMove}
+        />
+    );
+}
+
+function FourierCirclesMagNeg(props) {
+    return(
+        <circle
+            id = {"circle_-"+props.signal.id}
+            signal_id = {props.signal.id}
+            cx = {(props.signal.id)*-(800/8)}
+            cy = {(props.signal.amplitude)*(800/8)}
+            transform="translate(400,400) scale(1,-1)"
+            r = {20}
+            fill = "black"
+            stroke = "black"
+            stroke-width="1"
+            onMouseDown={props.onMouseDown}
+            onMouseUp={props.onMouseUp}
+            onMouseOut={props.onMouseUp}
+            onMouseMove={props.onMouseMove}
+        />
+    );
+}
+
+function FourierCirclesPhasePos(props) {
+    return(
+        <circle
+            id = {"circle_"+props.signal.id}
+            signal_id = {props.signal.id}
+            cx = {(props.signal.id)*(800/8)}
+            cy = {(props.signal.phase)*(700/360)}
+            transform="translate(400,400) scale(1,-1)"
+            r = {20}
+            fill = "black"
+            stroke = "black"
+            stroke-width="1"
+            onMouseDown={props.onMouseDown}
+            onMouseUp={props.onMouseUp}
+            onMouseOut={props.onMouseUp}
+            onMouseMove={props.onMouseMove}
+        />
+    );
+}
+
+function FourierCirclesPhaseNeg(props) {
+    return(
+        <circle
+            id = {"circle_-"+props.signal.id}
+            signal_id = {props.signal.id}
+            cx = {(props.signal.id)*-(800/8)}
+            cy = {(props.signal.phase)*-(700/360)}
+            transform="translate(400,400) scale(1,-1)"
+            r = {20}
+            fill = "black"
+            stroke = "black"
+            stroke-width="1"
+            onMouseDown={props.onMouseDown}
+            onMouseUp={props.onMouseUp}
+            onMouseOut={props.onMouseUp}
+            onMouseMove={props.onMouseMove}
+        />
+    );
+}
+
+class FourierMagPlot extends React.Component {
+
+    renderCirclePos(signal){
+        return(
+            <FourierCirclesMagPos
+                signal = {signal}
+                onMouseDown = {(event) => this.props.onMouseDown(event)}
+                onMouseUp = {(event) => this.props.onMouseUp(event)}
+                onMouseOut = {(event) => this.props.onMouseUp(event)}
+                onMouseMove = {(event) => this.props.onMouseMove(event)}
+            />
+        );
+    }
+
+    renderCircleNeg(signal){
+        return(
+            <FourierCirclesMagNeg
+                signal = {signal}
+                onMouseDown = {(event) => this.props.onMouseDown(event)}
+                onMouseUp = {(event) => this.props.onMouseUp(event)}
+                onMouseOut = {(event) => this.props.onMouseUp(event)}
+                onMouseMove = {(event) => this.props.onMouseMove(event)}
+            />
+        );
+    }
+
+    render(){
+
+        const signals = this.props.signals;
+        
+           let FourierMagSvg = d3.select("#svgFourierMagPlot")
+           let radius = 10;  
+   
+           const circleList = []; 
+   
+          
+           for (let i=0; i < this.props.signals.length; i++){
+                if(i ==0){
+                    circleList.push(
+                        this.renderCirclePos(this.props.signals[i]) 
+                    )
+                }
+                else{
+                    circleList.push(
+                        this.renderCirclePos(this.props.signals[i]),
+                        this.renderCircleNeg(this.props.signals[i])
+                    )
+                }
+           }
+           
+           // Should probably check both axis if they exist before appending
+           if(!document.getElementById("x_axis_fourierMagPlot")){
+   
+               // Create Axis for Frequency Plot
+               let xscale_freq = d3.scaleLinear()
+                       .domain([-3.5, 3.5]) // This needs to be dynamic
+                       .range([50, 750])
+   
+               let yscale_freq = d3.scaleLinear()
+                       .domain([3.5,-3.5]) // This needs to be dynamic
+                       .range([50, 750]);
+   
+               // Add scales to axis
+               const xAxisTicks = xscale_freq.ticks()
+                                        .filter(tick => Number.isInteger(tick));
+    
+               let x_axis_freq = d3.axisBottom(xscale_freq)
+                .tickValues(xAxisTicks)
+                .tickFormat(d3.format("d"));
+   
+               let y_axis_freq = d3.axisLeft(yscale_freq);
+
+               FourierMagSvg.append("text")
+                            .attr("text-anchor", "middle")  
+                            .attr("x",400)
+                            .attr("y",30)
+                            .style("font-size", "16px") 
+                            .style("text-decoration", "underline")  
+                            .text("Fourier Magnitude Plot");
+
+               FourierMagSvg.append('g')
+                            .attr("id","x_axis_fourierMagPlot")
+                            .attr("transform","translate(0,400)")
+                            .call(x_axis_freq)
+   
+               FourierMagSvg.append('g')
+                            .attr("id","y_axis_fourierMagPlot")
+                            .attr("transform","translate(400,0)")
+                            .call(y_axis_freq); 
+           }
+   
+           return( 
+               <svg>
+                  {circleList}
+               </svg>
+           );
+       }
+}
+
+class FourierPhasePlot extends React.Component {
+
+    renderCirclePos(signal){
+        return(
+            <FourierCirclesPhasePos
+                signal = {signal}
+                onMouseDown = {(event) => this.props.onMouseDown(event)}
+                onMouseUp = {(event) => this.props.onMouseUp(event)}
+                onMouseOut = {(event) => this.props.onMouseUp(event)}
+                onMouseMove = {(event) => this.props.onMouseMove(event)}
+            />
+        );
+    }
+
+    renderCircleNeg(signal){
+        return(
+            <FourierCirclesPhaseNeg
+                signal = {signal}
+                onMouseDown = {(event) => this.props.onMouseDown(event)}
+                onMouseUp = {(event) => this.props.onMouseUp(event)}
+                onMouseOut = {(event) => this.props.onMouseUp(event)}
+                onMouseMove = {(event) => this.props.onMouseMove(event)}
+            />
+        );
+    }
+
+    render(){
+
+        const signals = this.props.signals;
+        
+           let FourierPhaseSvg = d3.select("#svgFourierPhasePlot")
+           let radius = 10;  
+   
+           const circleList = []; 
+   
+          
+           
+           for (let i=0; i < this.props.signals.length; i++){
+
+                if(i ==0){
+                    circleList.push(
+                        this.renderCirclePos(this.props.signals[i]) 
+                    )
+                }
+                else{
+                    circleList.push(
+                        this.renderCirclePos(this.props.signals[i]),
+                        this.renderCircleNeg(this.props.signals[i])
+                    )
+                }
+               
+           }
+           
+           // Should probably check both axis if they exist before appending
+           if(!document.getElementById("x_axis_fourierPhasePlot")){
+   
+               // Create Axis for Frequency Plot
+               let xscale_freq = d3.scaleLinear()
+                       .domain([-3.5, 3.5]) // This needs to be dynamic
+                       .range([50, 750])
+   
+               let yscale_freq = d3.scaleLinear()
+                       .domain([180,-180]) // This needs to be dynamic
+                       .range([50, 750]);
+   
+               // Add scales to axis
+               const xAxisTicks = xscale_freq.ticks()
+                                        .filter(tick => Number.isInteger(tick));
+    
+               let x_axis_freq = d3.axisBottom(xscale_freq)
+                .tickValues(xAxisTicks)
+                .tickFormat(d3.format("d"));
+   
+               let y_axis_freq = d3.axisLeft(yscale_freq);
+               
+               FourierPhaseSvg.append("text")
+                            .attr("text-anchor", "middle")  
+                            .attr("x",400)
+                            .attr("y",30)
+                            .style("font-size", "16px") 
+                            .style("text-decoration", "underline")  
+                            .text("Fourier Phase Plot"); 
+
+               FourierPhaseSvg.append('g')
+                            .attr("id","x_axis_fourierPhasePlot")
+                            .attr("transform","translate(0,400)")
+                            .call(x_axis_freq)
+   
+               FourierPhaseSvg.append('g')
+                            .attr("id","y_axis_fourierPhasePlot")
+                            .attr("transform","translate(400,0)")
+                            .call(y_axis_freq); 
+           }
+   
+           return( 
+               <svg>
+                  {circleList}
+               </svg>
+           );
+       }
 }
 
 class FrequencyPlot extends React.Component {
@@ -185,82 +461,14 @@ class FrequencyPlot extends React.Component {
     }
 
     render(){
-     // console.log(this.props)
-     // console.log(this.props.signals)
-     const signals = this.props.signals;
-     
-        let circles = d3.range(signals.length).map(function (i) {
-            return {
-                // x:  (i+1)*width /6,
-                x: signals[i].frequency*50,
-                y: signals[i].amplitude*50,
-                id: i
-            };
-        });
 
-        console.log(circles)
-  
-        let color = d3.scaleOrdinal()
-            .range(d3.schemeCategory10);
-            
-        // console.log("color",color)
+    const signals = this.props.signals;
+     
         let freqSvg = d3.select("#svgFreqPlot")
         let radius = 10;  
 
-        // Maybe we'll just have to manually write these out lol in the html div
-        // console.log(circles[0])
-/*
-        freqSvg.selectAll("circle")
-          .data(circles)
-          .enter().append("circle")
-            .attr("id", "circle_")
-            .attr("cx", function (d) { return d.x; })
-            .attr("cy", function (d) { return d.y; })
-            .attr("r", radius)
-            .style("fill", function (d, i) { console.log("Hi", d, i); return color(i); })
-            .on("mouseover", function (d) {d3.select(this).style("cursor", "move");})
-            .on("mouseout", function (d) {})
-            .call(d3.drag()
-                  .on("start", dragstarted)
-                  .on("drag", dragged)
-                  .on("end", dragended)
-                  );
-*/
-        // Somehow need to get the new cx and cy values then do a setState()
         const circleList = []; 
-       /* 
-       
-       for (let i=0; i < signals.length; i++){
-           circleList.push(
-               
-               <circle key={"circle_" + signals[i].id}
-                       cx={ circles[i].x }
-                       cy={ circles[i].y }
-                       r ={ radius }
-                       
-                       style = {{ fill: function(circles ,i) {return color(i);} }}
-                       on = {{mouseover: function(circles) {d3.select(this).style("cursor","move");} }}
-                       on = {{mouseout: function(circles) {} }}
-                       call = { d3.drag()
-                                    .on("start", dragstarted)
-                                    .on("drag", dragged)
-                                    .on("end", dragended)                                
-                            }
-                        
-                       
-                       onMouseDown={ e => {
-                           console.log("clicked");
-                       }}
-                       
 
-                       onMouseDown={dragged}
-                       onMouseUp={dragended}
-               > 
-                  
-               </circle>
-           )
-       }
-       */
        
         for (let i=0; i < this.props.signals.length; i++){
             circleList.push(
@@ -273,29 +481,37 @@ class FrequencyPlot extends React.Component {
 
             // Create Axis for Frequency Plot
             let xscale_freq = d3.scaleLinear()
-                    .domain([-3.5, 3.5]) // This needs to be dynamic
-                    .range([50, 750]);
+                                .domain([-3.5, 3.5]) // This needs to be dynamic
+                                .range([50, 750]);
 
             let yscale_freq = d3.scaleLinear()
-                    .domain([3.5,-3.5]) // This needs to be dynamic
-                    .range([50, 750]);
+                                .domain([3.5,-3.5]) // This needs to be dynamic
+                                .range([50, 750]);
 
             // Add scales to axis
             let x_axis_freq = d3.axisBottom()
-            .scale(xscale_freq);
+                                .scale(xscale_freq);
 
             let y_axis_freq = d3.axisLeft()
-            .scale(yscale_freq);
+                                .scale(yscale_freq);
             
-            d3.select("#svgFreqPlot").append('g')
-            .attr("id","x_axis_freqPlot")
-            .attr("transform","translate(0,400)")
-            .call(x_axis_freq);
+            freqSvg.append("text")
+                    .attr("text-anchor", "middle")  
+                    .attr("x",400)
+                    .attr("y",30)
+                    .style("font-size", "16px") 
+                    .style("text-decoration", "underline")  
+                    .text("Frequency Domain Plot");
+                    
+            freqSvg.append('g')
+                    .attr("id","x_axis_freqPlot")
+                    .attr("transform","translate(0,400)")
+                    .call(x_axis_freq);
 
-            d3.select("#svgFreqPlot").append('g')
-            .attr("id","y_axis_freqPlot")
-            .attr("transform","translate(400,0)")
-            .call(y_axis_freq); 
+            freqSvg.append('g')
+                    .attr("id","y_axis_freqPlot")
+                    .attr("transform","translate(400,0)")
+                    .call(y_axis_freq); 
 
         }
 
@@ -358,11 +574,11 @@ class SumPlot extends React.Component {
 
         // Create scale
         let xscale = d3.scaleLinear()
-        .domain([0, 100]) // This needs to be dynamic
+        .domain([0, 2]) // This needs to be dynamic
         .range([0, 800]);
 
         let yscale = d3.scaleLinear()
-        .domain([0,100]) // This needs to be dynamic
+        .domain([3.5,-3.5]) // This needs to be dynamic
         .range([50, 750]);
 
         // Add scales to axis
@@ -391,13 +607,22 @@ class SumPlot extends React.Component {
 
             const svgSumPlot = d3.select("#svgSumPlot")
 
+                svgSumPlot.append("text")
+                .attr("text-anchor", "middle")  
+                .attr("x",400)
+                .attr("y",30)
+                .style("font-size", "16px") 
+                .style("text-decoration", "underline")  
+                .text("Sum of Signals Plot");
+
                 svgSumPlot.append('g')
                 .attr("transform","translate(0,400)")
                 .call(x_axis);
 
                 svgSumPlot.append('g')
                 .attr("transform","translate(20,0)")
-                .call(y_axis);
+                .call(y_axis)
+                .attr("transform","translate(50,0)");
                 
         }
 
@@ -429,6 +654,8 @@ class Home extends React.Component {
         this.handleMouseDown = this.handleMouseDown.bind(this);
         this.handleMouseUp = this.handleMouseUp.bind(this);
         this.handleMouseMove = this.handleMouseMove.bind(this);
+        this.handleMouseMoveFourierMag = this.handleMouseMoveFourierMag.bind(this);
+        this.handleMouseMoveFourierPhase = this.handleMouseMoveFourierPhase.bind(this);
     }
 
     // https://stackoverflow.com/questions/47581967/reactjs-failed-to-compile-objects-is-not-defined-no-undef
@@ -445,7 +672,8 @@ class Home extends React.Component {
                 id: signals.length,
                 amplitude: 0,   // Should be user input
                 frequency: 0,   // Should be user input
-                values: this.generateSignal(0,0),
+                phase: 0,
+                values: this.generateSignal(0,0,0),
                 dragging: false,    
             },]),
         });        
@@ -504,7 +732,7 @@ class Home extends React.Component {
 // 3) Animate the signals 
 // ^ (should be a cyclical permutation, or push the last element in the parth array to the first essentially)
 
-    generateSignal(amplitude, frequency){
+    generateSignal(amplitude, frequency, phase){
         // Generating path data
         // should preallocate array
         let points = [];
@@ -519,16 +747,39 @@ class Home extends React.Component {
 
         let Ts = Math.PI / 200;
 
+        // 1 period = 1 second
+        // 1 period = 400 pixels => Ts = 400 samples per second
+        // 1 Hz = 2pi radians
+
+        // Sampling frequency = samples/second
+        // 1 sample per 1/400 second (Ts = 1/400)
+        // Fs = 2pi * (1/400)
+        // Fs = pi / 200
+
         // Frequency is in Hz
-        // This is bascially an inverse FFT lmao
-        // doing just i++ plots 800 points and it's really laggy
+        // This is bascially an inverse FFT 
         // i is basically our t (1 unit of time)
         for(let i = 0; i< svgContainerWidth; i++)
         {
-            points[i] = [i, scale*amplitude*Math.sin(Ts*frequency*i) + svgContainerHeight/2];
+            points[i] = [i, scale*amplitude*Math.sin(Ts*frequency*i + (phase * (Math.PI / 180) )) + svgContainerHeight/2];
         }
         console.log(points)
         return points;
+    }
+
+    generateDC(amplitude){
+        let points = [];
+        // decide scaling later i guess
+        const svgContainerHeight = 800;
+        const svgContainerWidth = 800;
+        let scale = -100;
+
+        for(let i = 0; i< svgContainerWidth; i++)
+        {
+            points[i] = [i, scale*amplitude + svgContainerHeight/2 ];
+        }
+
+        return points
     }
 
     updateDials(){
@@ -541,13 +792,7 @@ class Home extends React.Component {
     }
 
     handleChange(event){
-        /*
-        console.log("Hi from handleChange", event);
-        console.log(event.target);
-        console.log(event.target.id);
-        console.log(event.target.value);
-        console.log("State:", this.state);
-        */
+
 
         const signals = this.state.signals;
         const inputType = event.target.getAttribute('input_type');
@@ -562,7 +807,7 @@ class Home extends React.Component {
             }
             else{
                 signals[signalID].amplitude = value;                 
-                signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency);
+                signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency, signals[signalID].phase);
                 document.getElementById("signal" + signalID + "_AmpText").value = value;
             }
         }
@@ -572,8 +817,24 @@ class Home extends React.Component {
             }
             else{
                 signals[signalID].frequency = value; 
-                signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency);
+                signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency, signals[signalID].phase);
                 document.getElementById("signal" + signalID + "_FreqText").value = value;
+            }
+        } 
+        else if ((inputType === "PhaseDial") || (inputType === "PhaseText")){
+            console.log("HELLO")
+            console.log(signals[signalID].amplitude)
+            console.log(signals[signalID].phase)
+            // The problem with the DC value is probably because we're calling generateSignal()
+            // insteaed of generateDC when the dials are changed?
+            // I guess these are all deliberate bugs (because we're porting code)
+            if(isNaN(value)){
+                value = 0;
+            }
+            else{
+                signals[signalID].phase = value; 
+                signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency, signals[signalID].phase);
+                document.getElementById("signal" + signalID + "_PhaseText").value = value;
             }
         }     
 
@@ -591,38 +852,17 @@ class Home extends React.Component {
     
     handleMouseDown(e){
         console.log("clicked")
-        // console.log(this)
-        // console.log(this.state.coords)
-        // console.log(this.state.dragging)
-        /*
-        this.state.dragging = true;
-        //Set coords
-        this.coords = {
-            x: e.pageX,
-            y: e.pageY
-        }
-        console.log(this.state.coords)
-        */
 
         e.preventDefault();
         const signals = this.state.signals;
         const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
-        
-        // let  rect = e.target.getBoundingClientRect(); 
 
         signals[signalID].dragging = true;
-        // signals[signalID].amplitude = Math.round(e.clientY - rect.top - signals[signalID].amplitude);
-        // signals[signalID].frequency = Math.round(e.clientX - rect.left - signals[signalID].frequency);
-
-        // console.log(signals[signalID].amplitude)
-        // console.log(signals[signalID].frequency)
 
         this.setState({
             signals: signals,   
             }
         );   
-
-        
     }
 
     handleMouseUp(e){
@@ -666,26 +906,12 @@ class Home extends React.Component {
             console.log(rect.left);
             console.log(rect.top);
 
-            //Get mouse change differential
-            //let xDiff = this.state.coords.x - e.clientX,
-           //     yDiff = this.state.coords.y - e.clientY;
-            //Update to our new coordinates
 
-            //    signals[signalID].frequency = Math.round(e.clientX) - signals[signalID].frequency;
-            //    signals[signalID].amplitude = Math.round(e.clientY) - signals[signalID].amplitude;
-            
             // Maybe should seperate coordinates and freq/amp values
              signals[signalID].frequency = (e.clientX - rect.left - 400) / 100;
              signals[signalID].amplitude = - (e.clientY - rect.top - 400) / 100;
-             signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency);
+             signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency, signals[signalID].phase);
 
-            //Adjust our x,y based upon the x/y diff from before
-             //   this.state.coords.x = this.state.coords.x - xDiff;       
-             //   this.state.coords.y = this.state.coords.y - yDiff;
-            //Re-render
-            //console.log(this.state.coords.x)
-            //console.log(this.state.coords.y)
-            //this.setState(this.state);  
 
             // We should set position limits
 
@@ -700,7 +926,70 @@ class Home extends React.Component {
             );  
         }
     }
+
+    handleMouseMoveFourierMag(e) {
+
+        const signals = this.state.signals;
+        const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
+
+        //If we are dragging
+          if (signals[signalID].dragging) {
+              e.preventDefault();
+
+
+            console.log(e.target)
+            let  rect = e.target.parentNode.parentNode.getBoundingClientRect();  
+
+            // Maybe should seperate coordinates and freq/amp values
+             signals[signalID].frequency = signals[signalID].id;
+             signals[signalID].amplitude = - (e.clientY - rect.top - 400) / (800/8);    // 800: svg height, 8: max axis size (-4 to 4)
+             signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency, signals[signalID].phase);
+
+            // We should set position limits
+
+            // Checking if signal is the DC value
+            if(signalID == 0){
+                signals[signalID].values = this.generateDC(signals[signalID].amplitude);
+            }
+
+            this.setState({
+                signals: signals,   
+                }
+            );  
+        }
+    }
     
+    handleMouseMoveFourierPhase(e) {
+
+        const signals = this.state.signals;
+        const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
+
+        //If we are dragging
+          if (signals[signalID].dragging) {
+              e.preventDefault();
+
+
+            console.log(e.target)
+            let  rect = e.target.parentNode.parentNode.getBoundingClientRect();  
+
+            // Maybe should seperate coordinates and freq/amp values
+             signals[signalID].frequency = signals[signalID].id;
+             signals[signalID].phase = parseInt( - (e.clientY - rect.top - 400) / (700/360) );
+             signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency, signals[signalID].phase);
+
+            // We should set position limits
+
+            // Checking if signal is the DC value
+            if(signalID == 0){
+                signals[signalID].values = this.generateDC(signals[signalID].amplitude);
+            }
+
+            this.setState({
+                signals: signals,   
+                }
+            );  
+        }
+    }
 
     render() {
 
@@ -709,24 +998,6 @@ class Home extends React.Component {
         // Appending svg
         // Check if the element 'svg_id' exists. If not, create new svg, append and draw it
         // I'm not sure if this scales well lol
-
-        // Check how to draw svg 
-        // Currently it only draws when you click the add New Signal button
-        // It should draw on page load
-        // Or just make it so that there isn't any signal on page load lol
-        /*
-        let lineGenerator = d3.line()
-                              .curve(d3.curveBasis);
-        let pathData = [];     
-        for(let i = 0; i< current.length; i++){
-            pathData[i] = lineGenerator(current[i].values);
-        }
-
-
-        d3.select(pathID)
-        .attr('d', pathData);
-        */
-        // console.log(current.length)
 
         for(let i = 0; i < current.length; i++){
 
@@ -749,7 +1020,7 @@ class Home extends React.Component {
                         .range([0, 800]);
 
             let yscale = d3.scaleLinear()
-                        .domain([-3.5,3.5]) // This needs to be dynamic
+                        .domain([3.5,-3.5]) // This needs to be dynamic
                         .range([50, 750]);
 
             // Add scales to axis
@@ -796,13 +1067,10 @@ class Home extends React.Component {
                     .call(x_axis);
                 
                 svgContainer.append('g')
-                .attr("transform","translate(30,0)")
+                .attr("transform","translate(50,0)")
                     .call(y_axis);
-                
             }          
         }
-
-        
 
 // transform = {{translate:"(50%,50%)"}}>
     return (
@@ -816,6 +1084,48 @@ class Home extends React.Component {
                 </div>
 
                 <div className = "sinePlots" id ="sinePlotsID">
+                </div>
+
+                <div className = "fourierPhasePlots" id ="fourierPhasePlotsID">
+                    <svg id="svgFourierPhasePlot" width="800" height="800"  
+                        style = {{
+                            position: "relative", 
+                            top: "0%",
+                            left: "0%",
+                            transform: "translate(0%, 0%)",
+                            border: '1px solid black',
+                            
+                            }}> 
+                    
+                        <FourierPhasePlot
+                            signals = {current}
+                            onMouseDown = {(event) => this.handleMouseDown(event)}
+                            onMouseUp = {(event) => this.handleMouseUp(event)}
+                            onMouseOut = {(event) => this.handleMouseUp(event)}
+                            onMouseMove = {(event) => this.handleMouseMoveFourierPhase(event)}
+                        />
+                    </svg>
+                </div>
+
+                <div className = "fourierMagPlots" id ="fourierMagPlotsID">
+                    <svg id="svgFourierMagPlot" width="800" height="800"  
+                        style = {{
+                            position: "relative", 
+                            top: "0%",
+                            left: "0%",
+                            transform: "translate(0%, 0%)",
+                            border: '1px solid black',
+                            
+                            }}> 
+                    
+                        <FourierMagPlot
+                            signals = {current}
+                            onMouseDown = {(event) => this.handleMouseDown(event)}
+                            onMouseUp = {(event) => this.handleMouseUp(event)}
+                            onMouseOut = {(event) => this.handleMouseUp(event)}
+                            onMouseMove = {(event) => this.handleMouseMoveFourierMag(event)}
+                        />
+                    </svg>
                 </div>
 
                 <div className = "freqPlots" id ="freqPlotsID">
@@ -837,7 +1147,6 @@ class Home extends React.Component {
                             onMouseMove = {(event) => this.handleMouseMove(event)}
                         />
                     </svg>
-
                 </div>
 
                 <div className = "sumPlots" id ="sumPlotsID">
@@ -876,65 +1185,3 @@ class Home extends React.Component {
     <Home />,
     document.getElementById('root')
   );
-  
-/*
-        // Creating the Frequency Domain Plot
-        const freqContainer = d3.select("#freqPlotsID").append("svg")
-        .attr("id", 'svgFreqPlot')
-        .attr("width", 800)
-        .attr("height", 800)
-        
-        // console.log("freqContainer:")
-        // console.log(freqContainer)
-        
-        let svg = d3.select("svg")
-                    .attr("style","border: 1px solid black")
-        // width = +svg.attr("width"),
-        // height = +svg.attr("height"),
-        let radius = 10;
-        
-
-        let circles = d3.range(1).map(function (i) {
-            return {
-                // x:  (i+1)*width /6,
-                x:  (i+1)* 800/6,
-                y: 250,
-                id: i+1
-            };
-        });
-  
-        let color = d3.scaleOrdinal()
-            .range(d3.schemeCategory10);
-
-        svg.selectAll("circle")
-          .data(circles)
-          .enter().append("circle")
-            .attr("cx", function (d) { return d.x; })
-            .attr("cy", function (d) { return d.y; })
-            .attr("r", radius)
-            .style("fill", function (d, i) { return color(i); })
-            .on("mouseover", function (d) {d3.select(this).style("cursor", "move");})
-            .on("mouseout", function (d) {})
-            .call(d3.drag()
-                  .on("start", dragstarted)
-                  .on("drag", dragged)
-                  .on("end", dragended)
-                  );
-*/
-
-// Drag functions
-function dragstarted(d) {
-    d3.select(this).raise().classed("active", true);
-}
-
-function dragged(d) {
-    // console.log(d3.event)
-    console.log(d); 
-    // console.log(this)
-
-    d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
-}
-
-function dragended(d) {
-    d3.select(this).classed("active", false);
-}

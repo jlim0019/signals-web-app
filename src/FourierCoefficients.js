@@ -3,14 +3,10 @@ import ReactDOM from 'react-dom';
 import styles from './FourierCoefficients.module.css'; 
 import * as d3 from "d3";
 
-// Note about global css import
-// https://stackoverflow.com/questions/59418570/css-not-changing-when-using-react-router-to-route-to-another-component
-
 const svgContainerWidth = 800;
 const svgContainerHeight = 800;
 
 function Dials(props) {
-    console.log("Hi from Dials!",props);
     return(
         <div className={styles.signal_container}>
             <div className={styles.signal_info}>
@@ -74,7 +70,6 @@ function Dials(props) {
 class Controls extends React.Component {
 
     renderDial(signal){
-        // console.log("Hi from renderDial",this.props);
         return(
             <Dials
                 signal = {signal}
@@ -93,8 +88,6 @@ class Controls extends React.Component {
                 </div>
             )
         }
-        // console.log("Hi from Controls render",this.props);
-        // console.log(signalList);
         return(
             <div className = {styles.dials} >
                 {signalList}
@@ -392,8 +385,7 @@ class SinePlot extends React.Component {
     
         // Appending svg
         // Check if the element 'svg_id' exists. If not, create new svg, append and draw it
-        // I'm not sure if this scales well lol
-
+        // Not sure if this scales well
         for(let i = 0; i < current.length; i++){
 
             let svgID  = 'svg_'
@@ -406,13 +398,10 @@ class SinePlot extends React.Component {
 
             let pathData = lineGenerator(current[i].values);
 
-            // d3.select('path')
-            // .attr('d', pathData);
-
              // Create scale
             let xscale = d3.scaleLinear()
                         .domain([0, 2]) // This needs to be dynamic
-                        .range([0, 800]);
+                        .range([50, 750]);
 
             let yscale = d3.scaleLinear()
                         .domain([3.5,-3.5]) // This needs to be dynamic
@@ -427,43 +416,47 @@ class SinePlot extends React.Component {
 
             // For now, if svgID exists, then just redraw
             if(document.getElementById(svgID)){
-                // console.log("Hi from redraw")
-                // console.log(pathID)
                 d3.select("#"+pathID).attr("d", pathData)  
-                  
             }
             
             // If svgID doesn't exist, then add it to the DOM
 
             if(!document.getElementById(svgID)){
                 //The SVG Container
-                const svgContainer = d3.select("#sinePlotsID").append("svg")
+                const svgSinePlot = d3.select("#sinePlotsID").append("svg")
                 .attr("id",svgID)
                 .attr("width", svgContainerWidth)
                 .attr("height", svgContainerHeight)
-                .attr("style","position: absolute", "left: 5%")
+                .attr("transform","translate(10)")
+                .attr("style","position: absolute")
                 .attr("style", "border: 1px solid black")
-                // .attr("y",i*svgContainerHeight)
-                //.attr("y", 200)
-                .attr("top","100")
+                .attr("top","100px")
+                .attr("left","50px")
+
+                svgSinePlot.append("text")
+                .attr("text-anchor", "middle")  
+                .attr("x",400)
+                .attr("y",30)
+                .style("font-size", "16px") 
+                .style("text-decoration", "underline")  
+                .text("Sine Plot " + i);
 
                 //The line SVG Path we draw
-                const lineGraph = svgContainer.append("path")
+                svgSinePlot.append("path")
                 .attr("id",pathID)
-                //.attr("datum", current[i].values)
-                //.attr("d", line.interpolate("basis"))
+                .attr("transform","translate(50)")
                 .attr("d", pathData)
                 .attr("stroke", "blue")
                 .attr("stroke-width", 2)
                 .attr("fill", "none")
 
-                svgContainer.append('g')
-                    .attr("transform","translate(0,400)")
-                    .call(x_axis);
+                svgSinePlot.append('g')
+                .attr("transform","translate(0,400)")
+                .call(x_axis);
                 
-                svgContainer.append('g')
+                svgSinePlot.append('g')
                 .attr("transform","translate(50,0)")
-                    .call(y_axis);
+                .call(y_axis);
             }          
         }
 
@@ -478,17 +471,17 @@ class SumPlot extends React.Component {
 
     render(){
 
-        // This is brute force?
         let sumSignals = []; 
+        let svgContainerHeight = 800;
+        let plotWidth = 700;
 
-        // This will break if the resolution breaks lool
-        for(let k = 0; k < 800; k++){
+        // This will break if we change plotWidth elsewhere 
+        for(let k = 0; k < plotWidth; k++){
             sumSignals.push([0,0]);
         }
 
         // Looping through all the signals
         for (let i=0; i < this.props.signals.length; i++){
-
 
             // Looping through the signal values
             for(let j=0; j < this.props.signals[i].values.length; j++){
@@ -500,23 +493,20 @@ class SumPlot extends React.Component {
             
         }
 
-        // There is a way to scale this to the svg dimenesions rather than hardcoding it
+        // Should scale this to the svg dimenesions rather than hardcoding it with svgContainerHeight
         for (let n =0; n < sumSignals.length; n++){
-            sumSignals[n][1] = sumSignals[n][1] - (this.props.signals.length-1)*(400)
+            sumSignals[n][1] = sumSignals[n][1] - (this.props.signals.length-1)*(svgContainerHeight/2)
         }
-        
-        // console.log("sumSignals:", sumSignals)
 
         let lineGenerator = d3.line()
           .curve(d3.curveNatural);
 
         let pathData = lineGenerator(sumSignals);
-        // We should probably also store this in the React states in the Home class 
 
         // Create scale
         let xscale = d3.scaleLinear()
         .domain([0, 2]) // This needs to be dynamic
-        .range([0, 800]);
+        .range([50, 750]);
 
         let yscale = d3.scaleLinear()
         .domain([3.5,-3.5]) // This needs to be dynamic
@@ -529,7 +519,7 @@ class SumPlot extends React.Component {
         let y_axis = d3.axisLeft()
         .scale(yscale);
 
-        //The line SVG Path we draw
+        //The svg line Path we draw
 
         // If exists, update
         if(document.getElementById("path_Sum")){
@@ -542,6 +532,7 @@ class SumPlot extends React.Component {
              d3.select("#svgSumPlot").append("path")
                 .attr("id","path_Sum")
                 .attr("d", pathData)
+                .attr("transform","translate(50)")
                 .attr("stroke", "blue")
                 .attr("stroke-width", 2)
                 .attr("fill", "none")
@@ -580,11 +571,11 @@ export class FourierCoefficients extends React.Component {
             signals: [
                 /* Example signal object 
                 {
-                id: 0,
-                amplitude: 1,
-                frequency: 1,
-                values: this.generateSignal(1,1),
-                dragging: false,    
+                    id: 0,
+                    amplitude: 1,
+                    frequency: 1,
+                    values: this.generateSignal(1,1),
+                    dragging: false,    
                 },
                 */
             ],
@@ -604,9 +595,9 @@ export class FourierCoefficients extends React.Component {
 
         // Once this.setState has been called, it'll call render() to render straight away
         this.setState({
-            signals: signals.concat([{  // Just concatenating array of JSON
+            signals: signals.concat([{       // Just concatenating array of JSON
                 id: signals.length,
-                amplitude: 0,   // Should be user input
+                amplitude: 0,                // Should be user input
                 frequency: signals.length,   // Should be user input
                 phase: 0,
                 values: this.generateSignal(0,signals.length,0),
@@ -649,27 +640,19 @@ export class FourierCoefficients extends React.Component {
     
     }
 
-// From James:
-// If you want to find the fourier transform of a complex signal, just change the sin and cosines into exponetial form (phasor)
-// Then just read of the phasor's coefficient for magnitude and frequency. 
-// E.g. for X*exp(j*omega*t), X and omega is your magnitude and frequency to be plotted in the frequency domain
-// So we don't have to compute FFT's on the fly (because then it'll be a performance vs memroy tradeoff). ^ If the above works well enough then we'll stick with it since it's much less restrictive
-
     generateSignal(amplitude, frequency, phase){
         // Generating path data
-        // should preallocate array
         let points = [];
-        // decide scaling later i guess
-        const svgContainerHeight = 800;
-        const svgContainerWidth = 800;
+        const plotHeight = 700;
+        const plotWidth = 700;
         let scale = -100;
+        let x_offset = 0;
+        let y_offset = 50;
 
-        // Sampling frequency: 50Hz ?
         let Fs = 80;
-        // let Ts = 1/Fs;
-
         let Ts = Math.PI / 200;
 
+        /* Calculation Reference
         // 1 period = 1 second
         // 1 period = 400 pixels => Ts = 400 samples per second
         // 1 Hz = 2pi radians
@@ -682,24 +665,25 @@ export class FourierCoefficients extends React.Component {
         // Frequency is in Hz
         // This is bascially an inverse FFT 
         // i is basically our t (1 unit of time)
-        for(let i = 0; i< svgContainerWidth; i++)
+        */
+        for(let i = x_offset; i< plotWidth; i++)
         {
-            points[i] = [i, scale*amplitude*Math.sin(Ts*frequency*i + (phase * (Math.PI / 180) )) + svgContainerHeight/2];
+            points[i] = [i, scale*amplitude*Math.sin(Ts*frequency*i + (phase * (Math.PI / 180) )) + (plotHeight/2 + y_offset)];
         }
-        // console.log(points)
         return points;
     }
 
     generateDC(amplitude){
         let points = [];
-        // decide scaling later i guess
-        const svgContainerHeight = 800;
-        const svgContainerWidth = 800;
+        const plotHeight = 700;
+        const plotWidth = 700;
         let scale = -100;
+        let x_offset = 0;
+        let y_offset = 50;
 
-        for(let i = 0; i< svgContainerWidth; i++)
+        for(let i = x_offset; i< plotWidth; i++)
         {
-            points[i] = [i, scale*amplitude + svgContainerHeight/2 ];
+            points[i] = [i, scale*amplitude + (plotHeight/2 + y_offset)];
         }
 
         return points
@@ -722,7 +706,7 @@ export class FourierCoefficients extends React.Component {
         const signalID = event.target.getAttribute('signal_id'); // Signal ID Number
         let value = parseFloat(event.target.value);   
 
-        // Text Form can exceed the maximum limit of 10?
+        // Text Form can currently exceed the maximum limit of 10, should limit?
 
         if((inputType === "AmpDial") || (inputType === "AmpText")){
             if(isNaN(value)){
@@ -747,9 +731,7 @@ export class FourierCoefficients extends React.Component {
             console.log("HELLO")
             console.log(signals[signalID].amplitude)
             console.log(signals[signalID].phase)
-            // The problem with the DC value is probably because we're calling generateSignal()
-            // insteaed of generateDC when the dials are changed?
-            // I guess these are all deliberate bugs (because we're porting code)
+
             if(isNaN(value)){
                 value = 0;
             }
@@ -769,12 +751,8 @@ export class FourierCoefficients extends React.Component {
             }
         }     
 
-        // console.log(signals);
         this.setState({
                 signals: signals,   
-                // Rewriting the whole array of objects may be expensive but it works 
-                // Could just access the key and change it's value rather than doing a whole update
-                // This is actually using a lot of memory though? F12 -> Memory tab
             }   
         );
 
@@ -798,8 +776,6 @@ export class FourierCoefficients extends React.Component {
 
     handleMouseUp(e){
         console.log("click released")
-        // this.state.dragging = false;
-        // this.state.coords = {};
 
         const signals = this.state.signals;
         const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
@@ -923,95 +899,11 @@ export class FourierCoefficients extends React.Component {
             );  
         }
     }
-/*
-    drawSignals(){
-        const current = this.state.signals;
-    
-        // Appending svg
-        // Check if the element 'svg_id' exists. If not, create new svg, append and draw it
-        // I'm not sure if this scales well lol
 
-        for(let i = 0; i < current.length; i++){
-
-            let svgID  = 'svg_'
-            let pathID = 'path_'
-            svgID = svgID.concat(i.toString(10))
-            pathID = pathID.concat(i.toString(10))
-
-            let lineGenerator = d3.line()
-                                  .curve(d3.curveNatural);
-
-            let pathData = lineGenerator(current[i].values);
-
-            // d3.select('path')
-            // .attr('d', pathData);
-
-             // Create scale
-            let xscale = d3.scaleLinear()
-                        .domain([0, 2]) // This needs to be dynamic
-                        .range([0, 800]);
-
-            let yscale = d3.scaleLinear()
-                        .domain([3.5,-3.5]) // This needs to be dynamic
-                        .range([50, 750]);
-
-            // Add scales to axis
-            let x_axis = d3.axisBottom()
-                .scale(xscale);
-
-            let y_axis = d3.axisLeft()
-                .scale(yscale);
-
-            // For now, if svgID exists, then just redraw
-            if(document.getElementById(svgID)){
-                // console.log("Hi from redraw")
-                // console.log(pathID)
-                d3.select("#"+pathID).attr("d", pathData)  
-                  
-            }
-            
-            // If svgID doesn't exist, then add it to the DOM
-
-            if(!document.getElementById(svgID)){
-                //The SVG Container
-                const svgContainer = d3.select("#sinePlotsID").append("svg")
-                .attr("id",svgID)
-                .attr("width", svgContainerWidth)
-                .attr("height", svgContainerHeight)
-                .attr("style","position: absolute", "left: 5%")
-                .attr("style", "border: 1px solid black")
-                // .attr("y",i*svgContainerHeight)
-                //.attr("y", 200)
-                .attr("top","100")
-
-                //The line SVG Path we draw
-                const lineGraph = svgContainer.append("path")
-                .attr("id",pathID)
-                //.attr("datum", current[i].values)
-                //.attr("d", line.interpolate("basis"))
-                .attr("d", pathData)
-                .attr("stroke", "blue")
-                .attr("stroke-width", 2)
-                .attr("fill", "none")
-
-                svgContainer.append('g')
-                    .attr("transform","translate(0,400)")
-                    .call(x_axis);
-                
-                svgContainer.append('g')
-                .attr("transform","translate(50,0)")
-                    .call(y_axis);
-            }          
-        }
-    }
-*/
     render() {
 
     const current = this.state.signals;
 
-    // this.drawSignals();
-
-// transform = {{translate:"(50%,50%)"}}>
     return (
             <div className = {styles.container}>
 
@@ -1020,64 +912,63 @@ export class FourierCoefficients extends React.Component {
                         signals = {current}
                     />
                 </div>
+                <div className = {styles.otherPlots}>
+                    <div className = {styles.fourierPhasePlots} id ="fourierPhasePlotsID">
+                        <svg id="svgFourierPhasePlot" width="800" height="800"  
+                            style = {{
+                                position: "relative", 
+                                top: "0%",
+                                left: "0%",
+                                transform: "translate(0%, 0%)",
+                                border: '1px solid black',
+                                
+                                }}> 
+                        
+                            <FourierPhasePlot
+                                signals = {current}
+                                onMouseDown = {(event) => this.handleMouseDown(event)}
+                                onMouseUp = {(event) => this.handleMouseUp(event)}
+                                onMouseOut = {(event) => this.handleMouseUp(event)}
+                                onMouseMove = {(event) => this.handleMouseMoveFourierPhase(event)}
+                            />
+                        </svg>
+                    </div>
 
-                <div className = {styles.fourierPhasePlots} id ="fourierPhasePlotsID">
-                    <svg id="svgFourierPhasePlot" width="800" height="800"  
-                        style = {{
-                            position: "relative", 
-                            top: "0%",
-                            left: "0%",
-                            transform: "translate(0%, 0%)",
-                            border: '1px solid black',
-                            
-                            }}> 
-                    
-                        <FourierPhasePlot
-                            signals = {current}
-                            onMouseDown = {(event) => this.handleMouseDown(event)}
-                            onMouseUp = {(event) => this.handleMouseUp(event)}
-                            onMouseOut = {(event) => this.handleMouseUp(event)}
-                            onMouseMove = {(event) => this.handleMouseMoveFourierPhase(event)}
-                        />
-                    </svg>
+                    <div className = {styles.fourierMagPlots} id ="fourierMagPlotsID">
+                        <svg id="svgFourierMagPlot" width="800" height="800"  
+                            style = {{
+                                position: "relative", 
+                                top: "0%",
+                                left: "0%",
+                                transform: "translate(0%, 0%)",
+                                border: '1px solid black',
+                                
+                                }}> 
+                        
+                            <FourierMagPlot
+                                signals = {current}
+                                onMouseDown = {(event) => this.handleMouseDown(event)}
+                                onMouseUp = {(event) => this.handleMouseUp(event)}
+                                onMouseOut = {(event) => this.handleMouseUp(event)}
+                                onMouseMove = {(event) => this.handleMouseMoveFourierMag(event)}
+                            />
+                        </svg>
+                    </div>
+                    <div className = {styles.sumPlots} id ="sumPlotsID">
+                        <svg id="svgSumPlot" width="800" height="800" 
+                            style = {{
+                                position: "relative", 
+                                top: "0%",
+                                left: "0%",
+                                transform: "translate(0%, 0%)",
+                                border: '1px solid black'
+                                }}> 
+                            <SumPlot
+                                signals = {current}
+                            />
+                        </svg>
+                    </div>
                 </div>
-
-                <div className = {styles.fourierMagPlots} id ="fourierMagPlotsID">
-                    <svg id="svgFourierMagPlot" width="800" height="800"  
-                        style = {{
-                            position: "relative", 
-                            top: "0%",
-                            left: "0%",
-                            transform: "translate(0%, 0%)",
-                            border: '1px solid black',
-                            
-                            }}> 
-                    
-                        <FourierMagPlot
-                            signals = {current}
-                            onMouseDown = {(event) => this.handleMouseDown(event)}
-                            onMouseUp = {(event) => this.handleMouseUp(event)}
-                            onMouseOut = {(event) => this.handleMouseUp(event)}
-                            onMouseMove = {(event) => this.handleMouseMoveFourierMag(event)}
-                        />
-                    </svg>
-                </div>
-
-                <div className = {styles.sumPlots} id ="sumPlotsID">
-                    <svg id="svgSumPlot" width="800" height="800" 
-                        style = {{
-                            position: "relative", 
-                            top: "0%",
-                            left: "0%",
-                            transform: "translate(0%, 0%)",
-                            border: '1px solid black'
-                            }}> 
-                        <SumPlot
-                            signals = {current}
-                        />
-                    </svg>
-                </div>
-
                 <div className = {styles.controls}>
                     
                         <Controls

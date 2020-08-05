@@ -98,15 +98,21 @@ body {
   
   .sinePlots{
       background-color: beige;
-      width: 810px;
+      width: 50vw;
       overflow-y: auto;
-      grid-row: 1 / 4;
+      grid-row: 1 / 1;
       grid-column: 1;
       left: 10%;
       /* 
       height: 200;
       width: 200;
       */
+  }
+
+  .otherPlots{
+    width: 50vw ;
+    overflow-y: auto;
+    grid-row: 1 / 1;
   }
   
   .fourierMagPlots{

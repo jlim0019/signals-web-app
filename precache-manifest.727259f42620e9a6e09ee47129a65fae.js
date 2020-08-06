@@ -1,11 +1,11 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "0194509aafa14e0c84fd5bdacb46eaa0",
+    "revision": "71928c57ed21d626fefa20ff4f27b123",
     "url": "/signals-web-app/index.html"
   },
   {
-    "revision": "b9f3afe99ab3b3197229",
-    "url": "/signals-web-app/static/css/main.2e2883be.chunk.css"
+    "revision": "d7cf8f1c5cde348ddbba",
+    "url": "/signals-web-app/static/css/main.0bf84775.chunk.css"
   },
   {
     "revision": "44dd03a4b228de2289fa",
@@ -16,8 +16,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/signals-web-app/static/js/2.6209a42d.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "b9f3afe99ab3b3197229",
-    "url": "/signals-web-app/static/js/main.e25fd148.chunk.js"
+    "revision": "d7cf8f1c5cde348ddbba",
+    "url": "/signals-web-app/static/js/main.c1773838.chunk.js"
   },
   {
     "revision": "652c5d2703387bf2fef3",

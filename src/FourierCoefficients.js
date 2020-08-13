@@ -3,9 +3,6 @@ import ReactDOM from 'react-dom';
 import styles from './FourierCoefficients.module.css'; 
 import * as d3 from "d3";
 
-const svgContainerWidth = 800;
-const svgContainerHeight = 800;
-
 function Dials(props) {
     return(
         <div className={styles.signal_container}>
@@ -15,9 +12,8 @@ function Dials(props) {
             </div>
             <div className={styles.signal_props}>
                 <div>Amplitude: {props.signal.amplitude}</div>
-                <div>Phase: {props.signal.phase}</div>
             </div>
-            <div className = {styles.signal_dials}>
+            <div className = {styles.signal_props}>
                 <div>
                     <input 
                     id = {"signal" + props.signal.id + "_AmpDial" }
@@ -40,6 +36,13 @@ function Dials(props) {
                     onChange={props.onChange}
                     />
                 </div>
+            </div>
+
+
+            <div className={styles.signal_props}>
+                <div>Phase: {props.signal.phase}</div>
+            </div>
+            <div className={styles.signal_props}>
                 <div>
                     <input 
                         id = {"signal" + props.signal.id + "_PhaseDial" }
@@ -90,22 +93,27 @@ class Controls extends React.Component {
         }
         return(
             <div className = {styles.dials} >
-                {signalList}
                 <button id = "add-signal" align-content = "center" onClick={() => this.props.onAdd()}> Add New Signal </button>
+                {signalList}
             </div>
         );
     }
 }
 
 function FourierCirclesMagPos(props) {
+    let divHeight = document.getElementById("fourierMagPlotsID").getBoundingClientRect().height;
+    let divWidth = document.getElementById("fourierMagPlotsID").getBoundingClientRect().width;
+    let plotHeight = 0.8*divHeight;
+    let plotWidth = 0.8*divWidth;
+
     return(
         <circle
             id = {"circle_"+props.signal.id}
             signal_id = {props.signal.id}
-            cx = {(props.signal.id)*(800/8)}
-            cy = {(props.signal.amplitude)*(800/8)}
-            transform="translate(400,400) scale(1,-1)"
-            r = {20}
+            cx = {(props.signal.id)*(plotWidth/8)}
+            cy = {(props.signal.amplitude)*(divHeight/8)}
+            transform={"translate(" + divWidth/2 +"," + divHeight/2 +") scale(1,-1)"}
+            r = {10}
             fill = "black"
             stroke = "black"
             strokeWidth="1"
@@ -118,14 +126,18 @@ function FourierCirclesMagPos(props) {
 }
 
 function FourierCirclesMagNeg(props) {
+    let divHeight = document.getElementById("fourierMagPlotsID").getBoundingClientRect().height;
+    let divWidth = document.getElementById("fourierMagPlotsID").getBoundingClientRect().width;
+    let plotWidth = 0.8*divWidth;
+
     return(
         <circle
             id = {"circle_-"+props.signal.id}
             signal_id = {props.signal.id}
-            cx = {(props.signal.id)*-(800/8)}
-            cy = {(props.signal.amplitude)*(800/8)}
-            transform="translate(400,400) scale(1,-1)"
-            r = {20}
+            cx = {(props.signal.id)*-(plotWidth/8)} // 8 is because our x-axis is divided into 8 sections 
+            cy = {(props.signal.amplitude)*(divHeight/8)}
+            transform={"translate(" + divWidth/2 +"," + divHeight/2 +") scale(1,-1)"}
+            r = {10}
             fill = "black"
             stroke = "black"
             strokeWidth="1"
@@ -138,14 +150,19 @@ function FourierCirclesMagNeg(props) {
 }
 
 function FourierCirclesPhasePos(props) {
+    let divHeight = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().height;
+    let divWidth = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().width;
+    let plotHeight = 0.8*divHeight;
+    let plotWidth = 0.8*divWidth;
+
     return(
         <circle
             id = {"circle_"+props.signal.id}
             signal_id = {props.signal.id}
-            cx = {(props.signal.id)*(800/8)}
-            cy = {(props.signal.phase)*(700/360)}
-            transform="translate(400,400) scale(1,-1)"
-            r = {20}
+            cx = {(props.signal.id)*(plotWidth/8)} // 8 is because our x-axis is divided into 8 sections 
+            cy = {(props.signal.phase)*(plotHeight/360)}
+            transform={"translate(" + divWidth/2 +"," + divHeight/2 +") scale(1,-1)"}
+            r = {10}
             fill = "black"
             stroke = "black"
             strokeWidth="1"
@@ -158,14 +175,19 @@ function FourierCirclesPhasePos(props) {
 }
 
 function FourierCirclesPhaseNeg(props) {
+    let divHeight = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().height;
+    let divWidth = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().width;
+    let plotHeight = 0.8*divHeight;
+    let plotWidth = 0.8*divWidth;
+
     return(
         <circle
             id = {"circle_-"+props.signal.id}
             signal_id = {props.signal.id}
-            cx = {(props.signal.id)*-(800/8)}
-            cy = {(props.signal.phase)*-(700/360)}
-            transform="translate(400,400) scale(1,-1)"
-            r = {20}
+            cx = {(props.signal.id)*-(plotWidth/8)} // 8 is because our x-axis is divided into 8 sections 
+            cy = {(props.signal.phase)*(plotHeight/360)}
+            transform={"translate(" + divWidth/2 +"," + divHeight/2 +") scale(1,-1)"}
+            r = {10}
             fill = "black"
             stroke = "black"
             strokeWidth="1"
@@ -178,6 +200,17 @@ function FourierCirclesPhaseNeg(props) {
 }
 
 class FourierMagPlot extends React.Component {
+    constructor(props){
+        super(props);
+        this.height = 0;
+        this.width = 0;
+    }
+
+    componentDidMount(){
+        // Only get dimensions when DOM is loaded
+        this.height = document.getElementById("fourierMagPlotsID").getBoundingClientRect().height;
+        this.width = document.getElementById("fourierMagPlotsID").getBoundingClientRect().width;
+    }
 
     renderCirclePos(signal){
         return(
@@ -232,12 +265,12 @@ class FourierMagPlot extends React.Component {
    
                // Create Axis for Frequency Plot
                let xscale_freq = d3.scaleLinear()
-                       .domain([-3.5, 3.5]) // This needs to be dynamic
-                       .range([50, 750])
+                       .domain([-4, 4]) // This needs to be dynamic
+                       .range([ (1/10)*this.width, (9/10)*this.width ]);
    
                let yscale_freq = d3.scaleLinear()
-                       .domain([3.5,-3.5]) // This needs to be dynamic
-                       .range([50, 750]);
+                       .domain([4,-4]) // This needs to be dynamic
+                       .range([ (1/10)*this.height, (9/10)*this.height ]);
    
                // Add scales to axis
                const xAxisTicks = xscale_freq.ticks()
@@ -251,20 +284,20 @@ class FourierMagPlot extends React.Component {
 
                FourierMagSvg.append("text")
                             .attr("text-anchor", "middle")  
-                            .attr("x",400)
-                            .attr("y",30)
+                            .attr("x",this.width/2)
+                            .attr("y",this.height/20)
                             .style("font-size", "16px") 
                             .style("text-decoration", "underline")  
                             .text("Fourier Magnitude Plot");
 
                FourierMagSvg.append('g')
                             .attr("id","x_axis_fourierMagPlot")
-                            .attr("transform","translate(0,400)")
+                            .attr("transform","translate(0," + this.height/2 + ")")
                             .call(x_axis_freq)
    
                FourierMagSvg.append('g')
                             .attr("id","y_axis_fourierMagPlot")
-                            .attr("transform","translate(400,0)")
+                            .attr("transform","translate(" + this.width/2 + ",0)")
                             .call(y_axis_freq); 
            }
    
@@ -277,6 +310,17 @@ class FourierMagPlot extends React.Component {
 }
 
 class FourierPhasePlot extends React.Component {
+    constructor(props){
+        super(props);
+        this.height = 0;
+        this.width = 0;
+    }
+
+    componentDidMount(){
+        // Only get dimensions when DOM is loaded
+        this.height = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().height;
+        this.width = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().width;
+    }
 
     renderCirclePos(signal){
         return(
@@ -334,12 +378,12 @@ class FourierPhasePlot extends React.Component {
    
                // Create Axis for Frequency Plot
                let xscale_freq = d3.scaleLinear()
-                       .domain([-3.5, 3.5]) // This needs to be dynamic
-                       .range([50, 750])
+                       .domain([-4, 4]) // This needs to be dynamic
+                       .range([ (1/10)*this.width, (9/10)*this.width ]);
    
                let yscale_freq = d3.scaleLinear()
                        .domain([180,-180]) // This needs to be dynamic
-                       .range([50, 750]);
+                       .range([ (1/10)*this.height, (9/10)*this.height ]);
    
                // Add scales to axis
                const xAxisTicks = xscale_freq.ticks()
@@ -353,20 +397,20 @@ class FourierPhasePlot extends React.Component {
                
                FourierPhaseSvg.append("text")
                             .attr("text-anchor", "middle")  
-                            .attr("x",400)
-                            .attr("y",30)
+                            .attr("x",this.width/2)
+                            .attr("y",this.height/20)
                             .style("font-size", "16px") 
                             .style("text-decoration", "underline")  
                             .text("Fourier Phase Plot"); 
 
                FourierPhaseSvg.append('g')
                             .attr("id","x_axis_fourierPhasePlot")
-                            .attr("transform","translate(0,400)")
+                            .attr("transform","translate(0," + this.height/2 + ")")
                             .call(x_axis_freq)
    
                FourierPhaseSvg.append('g')
                             .attr("id","y_axis_fourierPhasePlot")
-                            .attr("transform","translate(400,0)")
+                            .attr("transform","translate(" + this.width/2 + ",0)")
                             .call(y_axis_freq); 
            }
    
@@ -380,6 +424,18 @@ class FourierPhasePlot extends React.Component {
 
 
 class SinePlot extends React.Component {
+    constructor(props){
+        super(props);
+        this.height = 0;
+        this.width = 0;
+    }
+
+    componentDidMount(){
+        // Only get dimensions when DOM is loaded
+        this.height = document.getElementById("sinePlotsID").getBoundingClientRect().height;
+        this.width = document.getElementById("sinePlotsID").getBoundingClientRect().width;
+    }
+
     render(){
         const current = this.props.signals;
     
@@ -401,11 +457,11 @@ class SinePlot extends React.Component {
              // Create scale
             let xscale = d3.scaleLinear()
                         .domain([0, 2]) // This needs to be dynamic
-                        .range([50, 750]);
+                        .range([ (1/10)*this.width, (9/10)*this.width ]);
 
             let yscale = d3.scaleLinear()
-                        .domain([3.5,-3.5]) // This needs to be dynamic
-                        .range([50, 750]);
+                        .domain([4,-4]) // This needs to be dynamic
+                        .range([ (1/10)*this.height, (9/10)*this.height ]);
 
             // Add scales to axis
             let x_axis = d3.axisBottom()
@@ -425,8 +481,8 @@ class SinePlot extends React.Component {
                 //The SVG Container
                 const svgSinePlot = d3.select("#sinePlotsID").append("svg")
                 .attr("id",svgID)
-                .attr("width", svgContainerWidth)
-                .attr("height", svgContainerHeight)
+                .attr("width", "40vw")
+                .attr("height", "45vh")
                 .attr("transform","translate(10)")
                 .attr("style","position: absolute")
                 .attr("style", "border: 1px solid black")
@@ -435,8 +491,8 @@ class SinePlot extends React.Component {
 
                 svgSinePlot.append("text")
                 .attr("text-anchor", "middle")  
-                .attr("x",400)
-                .attr("y",30)
+                .attr("x",this.width/2)
+                .attr("y",this.height/20)
                 .style("font-size", "16px") 
                 .style("text-decoration", "underline")  
                 .text("Sine Plot " + i);
@@ -444,18 +500,18 @@ class SinePlot extends React.Component {
                 //The line SVG Path we draw
                 svgSinePlot.append("path")
                 .attr("id",pathID)
-                .attr("transform","translate(50)")
+                .attr("transform","translate(" + (1/10)*this.width + ",0)")
                 .attr("d", pathData)
                 .attr("stroke", "blue")
                 .attr("stroke-width", 2)
                 .attr("fill", "none")
 
                 svgSinePlot.append('g')
-                .attr("transform","translate(0,400)")
+                .attr("transform","translate(0," + this.height/2 + ")")
                 .call(x_axis);
                 
                 svgSinePlot.append('g')
-                .attr("transform","translate(50,0)")
+                .attr("transform","translate(" + (1/10)*this.width + ",0)")
                 .call(y_axis);
             }          
         }
@@ -468,12 +524,24 @@ class SinePlot extends React.Component {
 
 
 class SumPlot extends React.Component {
+    constructor(props){
+        super(props);
+        this.height = 0;
+        this.width = 0;
+    }
+
+    componentDidMount(){
+        // Only get dimensions when DOM is loaded
+        this.height = document.getElementById("svgSumPlot").getBoundingClientRect().height;
+        this.width = document.getElementById("svgSumPlot").getBoundingClientRect().width;
+    }
 
     render(){
 
         let sumSignals = []; 
-        let svgContainerHeight = 800;
-        let plotWidth = 700;
+        let plotWidth = 0.8 * this.width;
+        console.log(this.height);
+        console.log(this.width);
 
         // This will break if we change plotWidth elsewhere 
         for(let k = 0; k < plotWidth; k++){
@@ -495,7 +563,7 @@ class SumPlot extends React.Component {
 
         // Should scale this to the svg dimenesions rather than hardcoding it with svgContainerHeight
         for (let n =0; n < sumSignals.length; n++){
-            sumSignals[n][1] = sumSignals[n][1] - (this.props.signals.length-1)*(svgContainerHeight/2)
+            sumSignals[n][1] = sumSignals[n][1] - (this.props.signals.length-1)*(this.height/2)
         }
 
         let lineGenerator = d3.line()
@@ -503,14 +571,15 @@ class SumPlot extends React.Component {
 
         let pathData = lineGenerator(sumSignals);
 
+
         // Create scale
         let xscale = d3.scaleLinear()
         .domain([0, 2]) // This needs to be dynamic
-        .range([50, 750]);
+        .range([ (1/10)*this.width, (9/10)*this.width ]);
 
         let yscale = d3.scaleLinear()
-        .domain([3.5,-3.5]) // This needs to be dynamic
-        .range([50, 750]);
+        .domain([4,-4]) // This needs to be dynamic
+        .range([(1/10)*this.height, (9/10)*this.height ]);
 
         // Add scales to axis
         let x_axis = d3.axisBottom()
@@ -532,7 +601,7 @@ class SumPlot extends React.Component {
              d3.select("#svgSumPlot").append("path")
                 .attr("id","path_Sum")
                 .attr("d", pathData)
-                .attr("transform","translate(50)")
+                .attr("transform","translate(" + (1/10)*this.width + ")")
                 .attr("stroke", "blue")
                 .attr("stroke-width", 2)
                 .attr("fill", "none")
@@ -541,20 +610,19 @@ class SumPlot extends React.Component {
 
                 svgSumPlot.append("text")
                 .attr("text-anchor", "middle")  
-                .attr("x",400)
-                .attr("y",30)
+                .attr("x",this.width/2)
+                .attr("y",this.height/20)
                 .style("font-size", "16px") 
                 .style("text-decoration", "underline")  
                 .text("Sum of Signals Plot");
 
                 svgSumPlot.append('g')
-                .attr("transform","translate(0,400)")
+                .attr("transform", "translate(0," + this.height/2 + ")")
                 .call(x_axis);
 
                 svgSumPlot.append('g')
-                .attr("transform","translate(20,0)")
+                .attr("transform","translate(" + (1/10)*this.width + ",0)")
                 .call(y_axis)
-                .attr("transform","translate(50,0)");
                 
         }
 
@@ -643,16 +711,19 @@ export class FourierCoefficients extends React.Component {
     generateSignal(amplitude, frequency, phase){
         // Generating path data
         let points = [];
-        const plotHeight = 700;
-        const plotWidth = 700;
+        // This assumes that sumPlot and sinePlots have the same dimensions
+        const divHeight = document.getElementById("svgSumPlot").getBoundingClientRect().height;
+        const plotWidth = 0.8 * document.getElementById("svgSumPlot").getBoundingClientRect().width;
+        console.log("Plot Width",plotWidth)
         let scale = -100;
         let x_offset = 0;
-        let y_offset = 50;
+        let y_offset = 0;
 
-        let Fs = 80;
-        let Ts = Math.PI / 200;
+        // let Fs = 80;
+        let Ts = Math.PI / (plotWidth/4);
 
         /* Calculation Reference
+        // Assuming the plot is 800x800
         // 1 period = 1 second
         // 1 period = 400 pixels => Ts = 400 samples per second
         // 1 Hz = 2pi radians
@@ -668,22 +739,23 @@ export class FourierCoefficients extends React.Component {
         */
         for(let i = x_offset; i< plotWidth; i++)
         {
-            points[i] = [i, scale*amplitude*Math.sin(Ts*frequency*i + (phase * (Math.PI / 180) )) + (plotHeight/2 + y_offset)];
+            points[i] = [i, scale*amplitude*Math.sin(Ts*frequency*i + (phase * (Math.PI / 180) )) + (divHeight/2 + y_offset)];
         }
+        console.log("Plot Length", points.length)
         return points;
     }
 
     generateDC(amplitude){
         let points = [];
-        const plotHeight = 700;
-        const plotWidth = 700;
+        const divHeight = document.getElementById("svgSumPlot").getBoundingClientRect().height;
+        const plotWidth = 0.8 * document.getElementById("svgSumPlot").getBoundingClientRect().width;
         let scale = -100;
         let x_offset = 0;
-        let y_offset = 50;
+        let y_offset = 0;
 
         for(let i = x_offset; i< plotWidth; i++)
         {
-            points[i] = [i, scale*amplitude + (plotHeight/2 + y_offset)];
+            points[i] = [i, scale*amplitude + (divHeight/2 + y_offset)];
         }
 
         return points
@@ -848,9 +920,14 @@ export class FourierCoefficients extends React.Component {
             console.log(e.target)
             let  rect = e.target.parentNode.parentNode.getBoundingClientRect();  
 
+            let divHeight = document.getElementById("fourierMagPlotsID").getBoundingClientRect().height;
+            let divWidth = document.getElementById("fourierMagPlotsID").getBoundingClientRect().width;
+            let plotHeight = 0.8*divHeight;
+            let plotWidth = 0.8*divWidth;
+
             // Maybe should seperate coordinates and freq/amp values
              signals[signalID].frequency = signals[signalID].id;
-             signals[signalID].amplitude = - (e.clientY - rect.top - 400) / (800/8);    // 800: svg height, 8: max axis size (-4 to 4)
+             signals[signalID].amplitude = - (e.clientY - rect.top - divHeight/2) / (divHeight/8);    // 800: svg height, 8: max axis size (-4 to 4)
              signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency, signals[signalID].phase);
 
             // We should set position limits
@@ -881,9 +958,14 @@ export class FourierCoefficients extends React.Component {
             console.log(e.target)
             let  rect = e.target.parentNode.parentNode.getBoundingClientRect();  
 
+            let divHeight = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().height;
+            let divWidth = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().width;
+            let plotHeight = 0.8*divHeight;
+            let plotWidth = 0.8*divWidth;
+
             // Maybe should seperate coordinates and freq/amp values
              signals[signalID].frequency = signals[signalID].id;
-             signals[signalID].phase = parseInt( - (e.clientY - rect.top - 400) / (700/360) );
+             signals[signalID].phase = parseInt( - (e.clientY - rect.top - divHeight/2) / (plotHeight/360));
              signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency, signals[signalID].phase);
 
             // We should set position limits
@@ -907,14 +989,31 @@ export class FourierCoefficients extends React.Component {
     return (
             <div className = {styles.container}>
 
-                <div className = {styles.sinePlots} id ="sinePlotsID">
-                    <SinePlot
-                        signals = {current}
-                    />
+                <div className = {styles.timePlots} id = "timePlotsID">
+                    <div className = {styles.sinePlots} id ="sinePlotsID">
+                        <SinePlot
+                            signals = {current}
+                        />
+                    </div>
+                    <div className = {styles.sumPlots} id ="sumPlotsID">
+                        <svg id="svgSumPlot" width="40vw" height="45vh" 
+                            style = {{
+                                position: "relative", 
+                                top: "0%",
+                                left: "0%",
+                                transform: "translate(0%, 0%)",
+                                border: '1px solid black'
+                                }}> 
+                            <SumPlot
+                                signals = {current}
+                            />
+                        </svg>
+                    </div>
                 </div>
+
                 <div className = {styles.otherPlots}>
                     <div className = {styles.fourierPhasePlots} id ="fourierPhasePlotsID">
-                        <svg id="svgFourierPhasePlot" width="800" height="800"  
+                        <svg id="svgFourierPhasePlot" width="40vw" height="45vh"  
                             style = {{
                                 position: "relative", 
                                 top: "0%",
@@ -935,7 +1034,7 @@ export class FourierCoefficients extends React.Component {
                     </div>
 
                     <div className = {styles.fourierMagPlots} id ="fourierMagPlotsID">
-                        <svg id="svgFourierMagPlot" width="800" height="800"  
+                        <svg id="svgFourierMagPlot" width="40vw" height="45vh"  
                             style = {{
                                 position: "relative", 
                                 top: "0%",
@@ -954,20 +1053,7 @@ export class FourierCoefficients extends React.Component {
                             />
                         </svg>
                     </div>
-                    <div className = {styles.sumPlots} id ="sumPlotsID">
-                        <svg id="svgSumPlot" width="800" height="800" 
-                            style = {{
-                                position: "relative", 
-                                top: "0%",
-                                left: "0%",
-                                transform: "translate(0%, 0%)",
-                                border: '1px solid black'
-                                }}> 
-                            <SumPlot
-                                signals = {current}
-                            />
-                        </svg>
-                    </div>
+                    
                 </div>
                 <div className = {styles.controls}>
                     

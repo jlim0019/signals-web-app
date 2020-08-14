@@ -55,7 +55,7 @@ function App() {
       <Router>
         <div className = {styles.navbar}>
                     <div className = {styles.tab} id="home">  
-                      <Link to="/">Home</Link>
+                      <Link to="/signals-web-app">Home</Link>
                     </div>
                     <div className = {styles.tab}> 
                       <Link to="/about">About</Link>
@@ -67,7 +67,6 @@ function App() {
                       <Link to="/FrequencyDomain">Frequency Domain</Link>
                     </div>
         </div>
-            <hr/>
           {/*
             A <Switch> looks through all its children <Route>
             elements and renders the first one whose path
@@ -77,7 +76,7 @@ function App() {
           */}
 
           <Switch>
-            <Route exact path="/">
+            <Route exact path="/signals-web-app">
               <Home />
             </Route>
             <Route path="/about">

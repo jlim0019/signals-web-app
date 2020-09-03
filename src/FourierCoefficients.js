@@ -123,7 +123,21 @@ class Controls extends React.Component {
                                 <p>Try adding a signal!</p>
                             </span>
                     </div>
-                    <button id = "add-signal" align-content = "center" onClick={() => this.props.onAdd()}> Add New Signal </button>
+                    <button id = "add-signal" align-content = "center" onClick={() => this.props.onAdd(0, 0)}> Add New Signal </button>
+                    <div style={{gridRow: "2"}}> Try a demo signal </div>
+                    <select name="demoSignal" id="demoSignal" 
+                        value = {this.props.demoSignal}
+                        onChange = {(event) => this.props.onDemoSignal(event)}
+                        style={{gridRow: "2"}}>
+                        <option value ="select">- Select -</option>
+                        <option value ="empty">Empty</option>
+                        <option value="sine">Sine Wave</option>
+                        <option value="even">Even Wave</option>
+                        <option value="odd">Odd Wave</option>
+                        <option value="triangle">Triangle Wave</option>
+                        <option value="square">Square Wave Approx</option>
+                        <option value="sawtooth">Sawtooth Wave Approx</option>
+                    </select>
                 </div>
                 {signalList}
             </div>
@@ -254,18 +268,23 @@ class FourierMagPlot extends React.Component {
                     .range([ (1/10)*this.width, (9/10)*this.width ]);
 
             let yscale_freq = d3.scaleLinear()
-                    .domain([4,-4]) // This needs to be dynamic
-                    .range([ (1/10)*this.height, (9/10)*this.height ]);
+                    .domain([4,0]) // This needs to be dynamic
+                    .range([ (1/10)*this.height, (5/10)*this.height ]);
 
             // Add scales to axis
             const xAxisTicks = xscale_freq.ticks()
                                      .filter(tick => Number.isInteger(tick));
+
+            const yAxisTicks = yscale_freq.ticks()
+                                     .filter(tick => Number.isInteger(tick))                         
  
             let x_axis_freq = d3.axisBottom(xscale_freq)
              .tickValues(xAxisTicks)
              .tickFormat(d3.format("d"));
 
-            let y_axis_freq = d3.axisLeft(yscale_freq);
+            let y_axis_freq = d3.axisLeft(yscale_freq)
+             .tickValues(yAxisTicks)
+             .tickFormat(d3.format("d"));
 
             FourierMagSvg.append("text")
                          .attr("text-anchor", "middle")  
@@ -740,8 +759,7 @@ export class FourierCoefficients extends React.Component {
                 },
                 */
             ],
-            circles:[
-            ],
+            demoSignal: 'select',
         };
         // This binding is necessary to make `this.` work in the callback   
         this.handleMouseDown = this.handleMouseDown.bind(this);
@@ -749,19 +767,20 @@ export class FourierCoefficients extends React.Component {
         this.handleMouseMove = this.handleMouseMove.bind(this);
         this.handleMouseMoveFourierMag = this.handleMouseMoveFourierMag.bind(this);
         this.handleMouseMoveFourierPhase = this.handleMouseMoveFourierPhase.bind(this);
+        this.handleDemoSignal = this.handleDemoSignal.bind(this);
     }
     
-    addSignal(){
+    addSignal(amplitude, phase){
         const signals = this.state.signals;
 
         // Once this.setState has been called, it'll call render() to render straight away
         this.setState({
             signals: signals.concat([{       // Just concatenating array of JSON
                 id: signals.length,
-                amplitude: 0,                // Should be user input
+                amplitude: amplitude,                // Should be user input
                 frequency: signals.length,   // Should be user input
-                phase: 0,
-                values: this.generateSignal(0,signals.length,0),
+                phase: phase,
+                values: this.generateSignal(amplitude,signals.length,phase),
                 dragging: false,    
                 colour: hsl(signals.length*60, 100, 50)
             },]),
@@ -781,6 +800,7 @@ export class FourierCoefficients extends React.Component {
         signals.splice(i,1)
         console.log("After:", signals);
 
+        
         for(let n = 0; n< this.state.signals.length; n++){
             signals[n].id = n;
         }        
@@ -793,6 +813,7 @@ export class FourierCoefficients extends React.Component {
         pathID = pathID.concat(i.toString(10))
 
         d3.select("#"+svgID).remove();
+        d3.select("#"+pathID).remove();
 
         this.setState({
             signals: signals,
@@ -869,6 +890,7 @@ export class FourierCoefficients extends React.Component {
 
     handleChange(event){
 
+        console.log(event)
 
         const signals = this.state.signals;
         const inputType = event.target.getAttribute('input_type');
@@ -949,9 +971,9 @@ export class FourierCoefficients extends React.Component {
         const signals = this.state.signals;
         const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
         console.log(e.type)
+        
         if(e.type == 'mouseout' && signals[signalID].dragging) {
             console.log("mouse went out")
-            return;
         }
 
         signals[signalID].dragging = false;
@@ -1088,9 +1110,328 @@ export class FourierCoefficients extends React.Component {
         }
     }
 
+    emptyPlots(){
+        let signals = this.state.signals;
+
+        for(let i = 0; i< this.state.signals.length; i++){
+            let svgID  = 'svg_'                    
+            let pathID = 'path_'
+
+            svgID = svgID.concat(i.toString(10))
+            pathID = pathID.concat(i.toString(10))
+
+            d3.select("#"+svgID).remove();
+            d3.select("#"+pathID).remove();
+        }  
+
+        return signals = [];
+    }
+
+    handleDemoSignal(e){
+
+        let signals = this.state.signals;
+        const demoSignal = e.target.value;
+
+
+        if(demoSignal == 'empty'){
+            signals = this.emptyPlots();
+        }
+
+        // Note: If you make multiple setState() calls, only the last call will run (the prior ones won't run)
+        // Hence why here, we instead of repeatedly calling addSignal(), we explicitly generate the signals array
+        // setState() is asynchronous and are batched for performance gains. 
+        
+        if(demoSignal == 'sine'){
+ 
+            signals = this.emptyPlots();
+
+            // Generating DC signal
+            signals = signals.concat([{       
+                id: signals.length,
+                amplitude: 0,               
+                frequency: signals.length,  
+                phase: 0,
+                values: this.generateDC(0,signals.length,0),
+                dragging: false,    
+                colour: hsl(signals.length*60, 100, 50)
+            },])
+
+            // Generating other sine waves
+            signals = signals.concat([{       
+                id: signals.length,
+                amplitude: 1,                
+                frequency: signals.length,   
+                phase: 0,
+                values: this.generateSignal(1,signals.length,0),
+                dragging: false,    
+                colour: hsl(signals.length*60, 100, 50)
+            },])
+        }
+
+
+        if(demoSignal == 'even'){
+            signals = this.emptyPlots();
+
+            // Generating DC signal
+            signals = signals.concat([{       
+                id: signals.length,
+                amplitude: 0,               
+                frequency: signals.length,  
+                phase: 0,
+                values: this.generateDC(0,signals.length,0),
+                dragging: false,    
+                colour: hsl(signals.length*60, 100, 50)
+            },])
+
+            // Generating other sine waves
+            for(let i = 0; i < 4; i++){
+                // Odd
+                if((i % 2) != 0 ){
+                    signals = signals.concat([{       
+                        id: signals.length,
+                        amplitude: 1,                
+                        frequency: signals.length,   
+                        phase: 0,
+                        values: this.generateSignal(1,signals.length,0),
+                        dragging: false,    
+                        colour: hsl(signals.length*60, 100, 50)
+                    },])
+                }
+                // Even
+                if((i % 2) == 0 ){
+                    signals = signals.concat([{       
+                        id: signals.length,
+                        amplitude: 0,                
+                        frequency: signals.length,   
+                        phase: 0,
+                        values: this.generateSignal(0,signals.length,0),
+                        dragging: false,    
+                        colour: hsl(signals.length*60, 100, 50)
+                    },])
+                }
+                    
+            }
+        }
+
+        if(demoSignal == 'odd'){
+            signals = this.emptyPlots();
+
+            // Generating DC signal
+            signals = signals.concat([{       
+                id: signals.length,
+                amplitude: 0,               
+                frequency: signals.length,  
+                phase: 0,
+                values: this.generateDC(0,signals.length,0),
+                dragging: false,    
+                colour: hsl(signals.length*60, 100, 50)
+            },])
+
+            // Generating other sine waves
+            for(let i = 0; i < 4; i++){
+                // Odd
+                if((i % 2) != 0 ){
+                    signals = signals.concat([{       
+                        id: signals.length,
+                        amplitude: 0,                
+                        frequency: signals.length,   
+                        phase: 0,
+                        values: this.generateSignal(0,signals.length,0),
+                        dragging: false,    
+                        colour: hsl(signals.length*60, 100, 50)
+                    },])
+                }
+                // Even
+                if((i % 2) == 0 ){
+                    signals = signals.concat([{       
+                        id: signals.length,
+                        amplitude: 1,                
+                        frequency: signals.length,   
+                        phase: 0,
+                        values: this.generateSignal(1,signals.length,0),
+                        dragging: false,    
+                        colour: hsl(signals.length*60, 100, 50)
+                    },])
+                }
+                    
+            }
+        }
+
+        if(demoSignal == 'triangle'){
+            signals = this.emptyPlots();
+
+            // Generating DC signal
+            signals = signals.concat([{       
+                id: signals.length,
+                amplitude: 0,               
+                frequency: signals.length,  
+                phase: 0,
+                values: this.generateDC(0,signals.length,0),
+                dragging: false,    
+                colour: hsl(signals.length*60, 100, 50)
+            },])
+
+            // Generating other sine waves
+            let alternate = true;
+            for(let i = 1; i < 20; i++){
+                // Odd
+                if((i % 2) != 0 ){
+                    
+                    let n = 2*i + 1;
+                    // let amp = (8/ Math.pow(Math.PI,2))*(1/Math.pow(n,2));
+                    let amp = (10/Math.pow(n,2));
+
+                    // Non-phase shifted harmonic
+                    if(alternate){
+                        signals = signals.concat([{       
+                            id: signals.length,
+                            amplitude: amp,                
+                            frequency: signals.length,   
+                            phase: 0,
+                            values: this.generateSignal(amp,signals.length,0),
+                            dragging: false,    
+                            colour: hsl(signals.length*60, 100, 50)
+                        },])
+                        alternate = !alternate; 
+                    }
+                    else if(!alternate){
+                        signals = signals.concat([{       
+                            id: signals.length,
+                            amplitude: amp,                
+                            frequency: signals.length,   
+                            phase: 180,
+                            values: this.generateSignal(amp,signals.length, 180),
+                            dragging: false,    
+                            colour: hsl(signals.length*60, 100, 50)
+                        },])
+                        alternate = !alternate; 
+                    }    
+                    
+                }
+                // Even
+                if((i % 2) == 0 ){
+                    signals = signals.concat([{       
+                        id: signals.length,
+                        amplitude: 0,                
+                        frequency: signals.length,   
+                        phase: 0,
+                        values: this.generateSignal(0,signals.length,0),
+                        dragging: false,    
+                        colour: hsl(signals.length*60, 100, 50)
+                    },])
+                }
+                    
+            }
+        }
+
+        if(demoSignal == 'square'){
+            signals = this.emptyPlots();
+
+            // Generating DC signal
+            signals = signals.concat([{       
+                id: signals.length,
+                amplitude: 0,               
+                frequency: signals.length,  
+                phase: 0,
+                values: this.generateDC(0,signals.length,0),
+                dragging: false,    
+                colour: hsl(signals.length*60, 100, 50)
+            },])
+
+            // Generating other sine waves
+
+            for(let i = 1; i < 25; i++){
+                // Odd
+                if((i % 2) != 0 ){
+                    
+                    let amp = (4/Math.PI)*(1/i);
+
+                    signals = signals.concat([{       
+                        id: signals.length,
+                        amplitude: amp,                
+                        frequency: signals.length,   
+                        phase: 0,
+                        values: this.generateSignal(amp,signals.length,0),
+                        dragging: false,    
+                        colour: hsl(signals.length*60, 100, 50)
+                    },])    
+
+                }
+                // Even
+                if((i % 2) == 0 ){
+                    signals = signals.concat([{       
+                        id: signals.length,
+                        amplitude: 0,                
+                        frequency: signals.length,   
+                        phase: 0,
+                        values: this.generateSignal(0,signals.length,0),
+                        dragging: false,    
+                        colour: hsl(signals.length*60, 100, 50)
+                    },])
+                }
+                    
+            }
+        }
+
+        if(demoSignal == 'sawtooth'){
+            signals = this.emptyPlots();
+
+            // Generating DC signal
+            signals = signals.concat([{       
+                id: signals.length,
+                amplitude: 0,               
+                frequency: signals.length,  
+                phase: 0,
+                values: this.generateDC(0,signals.length,0),
+                dragging: false,    
+                colour: hsl(signals.length*60, 100, 50)
+            },])
+
+            // Generating other sine waves
+
+            for(let i = 1; i < 25; i++){
+
+                let amp = (4/Math.PI)*(1/i);
+
+                // Odd
+                if((i % 2) != 0 ){    
+
+                    signals = signals.concat([{       
+                        id: signals.length,
+                        amplitude: amp,                
+                        frequency: signals.length,   
+                        phase: 180,
+                        values: this.generateSignal(amp,signals.length,180),
+                        dragging: false,    
+                        colour: hsl(signals.length*60, 100, 50)
+                    },])    
+                }
+                // Even
+                if((i % 2) == 0 ){
+                    signals = signals.concat([{       
+                        id: signals.length,
+                        amplitude: amp,                
+                        frequency: signals.length,   
+                        phase: 0,
+                        values: this.generateSignal(amp,signals.length,0),
+                        dragging: false,    
+                        colour: hsl(signals.length*60, 100, 50)
+                    },])
+                }
+                    
+            }
+        }
+
+        this.setState({
+            signals: signals,
+            demoSignal: demoSignal,
+        });
+    }
+
     render() {
 
     const current = this.state.signals;
+    console.log('demo:', this.state.demoSignal);
 
     return (
             <div className = {styles.container}>
@@ -1127,26 +1468,6 @@ export class FourierCoefficients extends React.Component {
                 </div>
 
                 <div className = {styles.otherPlots}>
-                    <div className = {styles.fourierPhasePlots} id ="fourierPhasePlotsID">
-                        <svg id="svgFourierPhasePlot" width="40vw" height="45vh"  
-                            style = {{
-                                position: "relative", 
-                                top: "0%",
-                                left: "0%",
-                                transform: "translate(0%, 0%)",
-                                border: '1px solid black',
-                                
-                                }}> 
-                        
-                            <FourierPhasePlot
-                                signals = {current}
-                                onMouseDown = {(event) => this.handleMouseDown(event)}
-                                onMouseUp = {(event) => this.handleMouseUp(event)}
-                                onMouseOut = {(event) => this.handleMouseUp(event)}
-                                onMouseMove = {(event) => this.handleMouseMoveFourierPhase(event)}
-                            />
-                        </svg>
-                    </div>
 
                     <div className = {styles.fourierMagPlots} id ="fourierMagPlotsID">
                         <svg id="svgFourierMagPlot" width="40vw" height="45vh"  
@@ -1168,15 +1489,38 @@ export class FourierCoefficients extends React.Component {
                             />
                         </svg>
                     </div>
+
+                    <div className = {styles.fourierPhasePlots} id ="fourierPhasePlotsID">
+                        <svg id="svgFourierPhasePlot" width="40vw" height="45vh"  
+                            style = {{
+                                position: "relative", 
+                                top: "0%",
+                                left: "0%",
+                                transform: "translate(0%, 0%)",
+                                border: '1px solid black',
+                                
+                                }}> 
+                        
+                            <FourierPhasePlot
+                                signals = {current}
+                                onMouseDown = {(event) => this.handleMouseDown(event)}
+                                onMouseUp = {(event) => this.handleMouseUp(event)}
+                                onMouseOut = {(event) => this.handleMouseUp(event)}
+                                onMouseMove = {(event) => this.handleMouseMoveFourierPhase(event)}
+                            />
+                        </svg>
+                    </div>         
                     
                 </div>
                 <div className = {styles.controls}>
                     
                         <Controls
                             signals = {current}
+                            demoSignal = {this.state.demoSignal}
                             onChange = {(event) => this.handleChange(event)}
-                            onAdd = {() => this.addSignal()}
+                            onAdd = {(amplitude, phase) => this.addSignal(amplitude, phase)}
                             onRemove = {(i) => this.removeSignal(i)}
+                            onDemoSignal = {(event) => this.handleDemoSignal(event)}
                         />
                     
                 </div>

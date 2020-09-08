@@ -19,7 +19,7 @@ function Dials(props) {
                 </div>
                 
                 <div>ID: {props.signal.id}</div>
-                <button id = "remove-signal" onClick={(i) => props.onRemove(props.signal.id)}> Remove Signal </button>
+                <button id = "remove-signal" onClick={(signalID) => props.onRemove(props.signal.id)}> Remove Signal </button>
                 <div> Colour </div>
                 <svg height = "40" width = "20">
                     <circle
@@ -336,16 +336,16 @@ class FourierMagPlot extends React.Component {
    
            const circleList = [];
           
-           for (let i=0; i < this.props.signals.length; i++){
-                if(i ==0){
+           for (let i=0; i < signals.length; i++){
+                if(signals[i].id === 0){
                     circleList.push(
-                        this.renderCirclePos(this.props.signals[i]) 
+                        this.renderCirclePos(signals[i]) 
                     )
                 }
                 else{
                     circleList.push(
-                        this.renderCirclePos(this.props.signals[i]),
-                        this.renderCircleNeg(this.props.signals[i])
+                        this.renderCirclePos(signals[i]),
+                        this.renderCircleNeg(signals[i])
                     )
                 }
            }                    
@@ -446,7 +446,7 @@ class FourierPhasePlot extends React.Component {
            
            for (let i=0; i < this.props.signals.length; i++){
 
-                if(i ==0){
+                if(i ===0){
                     circleList.push(
                         this.renderCirclePos(this.props.signals[i]) 
                     )
@@ -519,34 +519,29 @@ class SinePlot extends React.Component {
     }
 
     render(){
-        const current = this.props.signals;
+        const signals = this.props.signals;
     
         // "Overlay all sine plots into one graph" version
-        for(let i = 0; i < current.length; i++){
-
-            let svgID  = 'svg_'
-            let pathID = 'path_'
-            svgID = svgID.concat(i.toString(10))
-            pathID = pathID.concat(i.toString(10))
+        for(let i = 0; i < signals.length; i++){
 
             let lineGenerator = d3.line().curve(d3.curveNatural);
   
-            let pathData = lineGenerator(current[i].values);
+            let pathData = lineGenerator(signals[i].values);
     
             //The svg line Path we draw
     
             // If exists, update
-            if(document.getElementById(pathID)){
-                d3.select("#"+pathID).attr("d", pathData)                      
+            if(document.getElementById(signals[i].pathID)){
+                d3.select("#"+signals[i].pathID).attr("d", pathData)                      
             }
             
             // Draws path if it doesn't exist
-            if(!document.getElementById(pathID)){
+            if(!document.getElementById(signals[i].pathID)){
                 d3.select("#svgSinePlot").append("path")
-                    .attr("id",pathID)
+                    .attr("id",signals[i].pathID)
                     .attr("d", pathData)
                     .attr("transform","translate(" + (1/10)*this.width + ")")
-                    .attr("stroke", current[i].colour)
+                    .attr("stroke", signals[i].colour)
                     .attr("stroke-width", 2)
                     .attr("fill", "none")
           }
@@ -723,7 +718,7 @@ class SumPlot extends React.Component {
 
         // If exists, update
         if(document.getElementById("path_Sum")){
-            d3.select("#"+"path_Sum").attr("d", pathData)  
+            d3.select("#".concat("path_Sum")).attr("d", pathData)  
                
         }
         
@@ -771,49 +766,76 @@ export class FourierCoefficients extends React.Component {
     }
     
     addSignal(amplitude, phase){
-        const signals = this.state.signals;
+        let signals = this.state.signals;
+
+        // Loop through the current state's signals array
+        for(let i = 0; i < signals.length + 1; i++){
+
+            // Add new signal to end of array if we reach end of array
+            if(i === signals.length){
+                signals = signals.concat([{       // Just concatenating array of JSON
+                    id: signals.length,
+                    amplitude: amplitude,                // Should be user input
+                    frequency: signals.length,   // Should be user input
+                    phase: phase,
+                    values: this.generateSignal(amplitude,signals.length,phase),
+                    pathID: 'path_'.concat(i.toString(10)), 
+                    dragging: false,    
+                    colour: hsl(signals.length*60, 100, 50)
+                },]);
+                console.log(signals)
+                break;
+            }
+
+            // If there's a missing ID, insert it to appropriate index
+            // e.g. id array: [0, 1, 3]. Therefore missing id 2
+            if(i !== signals[i].id){
+                let newSignal = {       
+                    id: i,
+                    amplitude: amplitude,                // Should be user input
+                    frequency: i,   // Should be user input
+                    phase: phase,
+                    values: this.generateSignal(amplitude,i,phase),
+                    pathID: 'path_'.concat(i.toString(10)), 
+                    dragging: false,    
+                    colour: hsl(i*60, 100, 50)
+                    
+                }
+
+                signals.splice(i, 0, newSignal);
+                break;
+            }
+        }
 
         // Once this.setState has been called, it'll call render() to render straight away
         this.setState({
-            signals: signals.concat([{       // Just concatenating array of JSON
-                id: signals.length,
-                amplitude: amplitude,                // Should be user input
-                frequency: signals.length,   // Should be user input
-                phase: phase,
-                values: this.generateSignal(amplitude,signals.length,phase),
-                dragging: false,    
-                colour: hsl(signals.length*60, 100, 50)
-            },]),
+            signals: signals,
         });        
-
-
     }
 
-    removeSignal(i){
+    removeSignal(signalID){
         // Need to find signal id from the array and delete, then re-update id's
         const signals = this.state.signals;
 
-
         console.log("Hi from removeSignal");    
-        console.log(i)
+        console.log(signalID)
         console.log("Before: ", signals);
-        signals.splice(i,1)
-        console.log("After:", signals);
 
+        let index;
+        for(index = 0; index < signals.length; index++){
+            if(signals[index].id === signalID){
+                break
+            }
+        }
+        console.log(index)
         
-        for(let n = 0; n< this.state.signals.length; n++){
-            signals[n].id = n;
-        }        
-
-        // Find the svgId and pathID and delete from DOM
-
-        let svgID  = 'svg_'
-        let pathID = 'path_'
-        svgID = svgID.concat(i.toString(10))
-        pathID = pathID.concat(i.toString(10))
-
-        d3.select("#"+svgID).remove();
-        d3.select("#"+pathID).remove();
+        // Find the pathID and delete from DOM
+        d3.select("#"+signals[index].pathID).remove();
+        
+        // Find the signal in the signals array and delete
+        signals.splice(index,1)
+        
+        console.log("After:", signals);
 
         this.setState({
             signals: signals,
@@ -905,7 +927,7 @@ export class FourierCoefficients extends React.Component {
             }
             else{
                 // DC Case
-                if(signalID == 0){
+                if(signalID === 0){
                     signals[signalID].amplitude = value; 
                     signals[signalID].values = this.generateDC(signals[signalID].amplitude);
                     document.getElementById("signal" + signalID + "_AmpText").value = value;
@@ -928,7 +950,7 @@ export class FourierCoefficients extends React.Component {
             }
             else{
                 // DC Case
-                if(signalID == 0){
+                if(signalID === 0){
                     signals[signalID].phase = value; 
                     signals[signalID].values = this.generateDC(signals[signalID].amplitude);
                     document.getElementById("signal" + signalID + "_PhaseText").value = value;
@@ -955,9 +977,19 @@ export class FourierCoefficients extends React.Component {
 
         e.preventDefault();
         const signals = this.state.signals;
-        const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
+        const signalID = parseInt(e.target.getAttribute('signal_id')); // Signal ID Number
+        
+        // Finding signal array's index from signal id
+        let index;
+        for(index = 0; index < signals.length; index++){
+            if(signals[index].id === signalID){
+                
+                break
+            }
+        }
+        signals[index].dragging = true;
 
-        signals[signalID].dragging = true;
+        // signals[signalID].dragging = true;
 
         this.setState({
             signals: signals,   
@@ -969,14 +1001,25 @@ export class FourierCoefficients extends React.Component {
         console.log("click released")
 
         const signals = this.state.signals;
-        const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
+        const signalID = parseInt(e.target.getAttribute('signal_id')); // Signal ID Number
         console.log(e.type)
+
+        // Finding signal array's index from signal id
+        let index;
+        for(index = 0; index < signals.length; index++){
+            if(signals[index].id === signalID){
+                
+                break
+            }
+        }
         
-        if(e.type == 'mouseout' && signals[signalID].dragging) {
+        if(e.type === 'mouseout' && signals[index].dragging) {
             console.log("mouse went out")
         }
 
-        signals[signalID].dragging = false;
+        signals[index].dragging = false;
+
+        // signals[signalID].dragging = false;
         
         this.setState({
             signals: signals,   
@@ -989,10 +1032,17 @@ export class FourierCoefficients extends React.Component {
     handleMouseMove(e) {
 
         const signals = this.state.signals;
-        const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
+        const signalID = parseInt(e.target.getAttribute('signal_id')); // Signal ID Number
+        
+        let index;
+        for(index = 0; index < signals.length; index++){
+            if(signals[index].id === signalID){
+                break
+            }
+        }
 
         //If we are dragging
-          if (signals[signalID].dragging) {
+          if (signals[index].dragging) {
               e.preventDefault();
 
               console.log(e)
@@ -1007,15 +1057,15 @@ export class FourierCoefficients extends React.Component {
 
 
             // Maybe should seperate coordinates and freq/amp values
-             signals[signalID].frequency = (e.clientX - rect.left - 400) / 100;
-             signals[signalID].amplitude = - (e.clientY - rect.top - 400) / 100;
-             signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency, signals[signalID].phase);
+             signals[index].frequency = (e.clientX - rect.left - 400) / 100;
+             signals[index].amplitude = - (e.clientY - rect.top - 400) / 100;
+             signals[index].values = this.generateSignal(signals[index].amplitude, signals[index].frequency, signals[index].phase);
 
 
             // We should set position limits
 
-            console.log(signals[signalID].frequency)
-            console.log(signals[signalID].amplitude)
+            console.log(signals[index].frequency)
+            console.log(signals[index].amplitude)
 
             console.log(this)
 
@@ -1029,10 +1079,18 @@ export class FourierCoefficients extends React.Component {
     handleMouseMoveFourierMag(e) {
 
         const signals = this.state.signals;
-        const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
+        const signalID = parseInt(e.target.getAttribute('signal_id')); // Signal ID Number
+
+        let index;
+        for(index = 0; index < signals.length; index++){
+            if(signals[index].id === signalID){
+                
+                break
+            }
+        }
 
         //If we are dragging
-          if (signals[signalID].dragging) {
+          if (signals[index].dragging) {
               e.preventDefault();
 
 
@@ -1045,15 +1103,15 @@ export class FourierCoefficients extends React.Component {
             let plotWidth = 0.8*divWidth;
 
             // Maybe should seperate coordinates and freq/amp values
-             signals[signalID].frequency = signals[signalID].id;
-             signals[signalID].amplitude = - (e.clientY - rect.top - divHeight/2) / (plotHeight/8);    // 800: svg height, 8: max axis size (-4 to 4)
-             signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency, signals[signalID].phase);
+             signals[index].frequency = signals[index].id;
+             signals[index].amplitude = - (e.clientY - rect.top - divHeight/2) / (plotHeight/8);    // 800: svg height, 8: max axis size (-4 to 4)
+             signals[index].values = this.generateSignal(signals[index].amplitude, signals[index].frequency, signals[index].phase);
 
             // We should set position limits
 
             // Checking if signal is the DC value
-            if(signalID == 0){
-                signals[signalID].values = this.generateDC(signals[signalID].amplitude);
+            if(index === 0){
+                signals[index].values = this.generateDC(signals[index].amplitude);
             }
 
             this.setState({
@@ -1066,13 +1124,21 @@ export class FourierCoefficients extends React.Component {
     handleMouseMoveFourierPhase(e) {
 
         const signals = this.state.signals;
-        const signalID = e.target.getAttribute('signal_id'); // Signal ID Number
-        const circleCX = e.target.getAttribute('cx'); // Circle x position
+        const signalID = parseInt(e.target.getAttribute('signal_id')); // Signal ID Number
+        const circleCX = parseInt(e.target.getAttribute('cx')); // Circle x position
         console.log("signalID: ",signalID)
-        console.log(circleCX)
+        console.log(typeof(circleCX))
+
+        let index;
+        for(index = 0; index < signals.length; index++){
+            if(signals[index].id === signalID){
+                
+                break
+            }
+        }
 
         //If we are dragging
-          if (signals[signalID].dragging) {
+          if (signals[index].dragging) {
               e.preventDefault();
 
 
@@ -1087,20 +1153,20 @@ export class FourierCoefficients extends React.Component {
             // Maybe should seperate coordinates and freq/amp values
 
             if(circleCX >= 0){
-                signals[signalID].phase = parseInt( - (e.clientY - rect.top - divHeight/2) / (plotHeight/360));
+                signals[index].phase = parseInt( - (e.clientY - rect.top - divHeight/2) / (plotHeight/360));
             } 
             else if(circleCX < 0){
-                signals[signalID].phase = parseInt( (e.clientY - rect.top - divHeight/2) / (plotHeight/360));
+                signals[index].phase = parseInt( (e.clientY - rect.top - divHeight/2) / (plotHeight/360));
             } 
 
-            signals[signalID].frequency = signals[signalID].id; 
-            signals[signalID].values = this.generateSignal(signals[signalID].amplitude, signals[signalID].frequency, signals[signalID].phase);
+            signals[index].frequency = signals[index].id; 
+            signals[index].values = this.generateSignal(signals[index].amplitude, signals[index].frequency, signals[index].phase);
 
             // We should set position limits
 
             // Checking if signal is the DC value
-            if(signalID == 0){
-                signals[signalID].values = this.generateDC(signals[signalID].amplitude);
+            if(index === 0){
+                signals[index].values = this.generateDC(signals[index].amplitude);
             }
 
             this.setState({
@@ -1113,15 +1179,9 @@ export class FourierCoefficients extends React.Component {
     emptyPlots(){
         let signals = this.state.signals;
 
-        for(let i = 0; i< this.state.signals.length; i++){
-            let svgID  = 'svg_'                    
-            let pathID = 'path_'
+        for(let i = 0; i< signals.length; i++){                 
 
-            svgID = svgID.concat(i.toString(10))
-            pathID = pathID.concat(i.toString(10))
-
-            d3.select("#"+svgID).remove();
-            d3.select("#"+pathID).remove();
+            d3.select("#"+signals[i].pathID).remove();
         }  
 
         return signals = [];
@@ -1133,7 +1193,7 @@ export class FourierCoefficients extends React.Component {
         const demoSignal = e.target.value;
 
 
-        if(demoSignal == 'empty'){
+        if(demoSignal === 'empty'){
             signals = this.emptyPlots();
         }
 
@@ -1141,7 +1201,7 @@ export class FourierCoefficients extends React.Component {
         // Hence why here, we instead of repeatedly calling addSignal(), we explicitly generate the signals array
         // setState() is asynchronous and are batched for performance gains. 
         
-        if(demoSignal == 'sine'){
+        if(demoSignal === 'sine'){
  
             signals = this.emptyPlots();
 
@@ -1152,6 +1212,7 @@ export class FourierCoefficients extends React.Component {
                 frequency: signals.length,  
                 phase: 0,
                 values: this.generateDC(0,signals.length,0),
+                pathID: 'path_0', 
                 dragging: false,    
                 colour: hsl(signals.length*60, 100, 50)
             },])
@@ -1163,13 +1224,14 @@ export class FourierCoefficients extends React.Component {
                 frequency: signals.length,   
                 phase: 0,
                 values: this.generateSignal(1,signals.length,0),
+                pathID: 'path_1', 
                 dragging: false,    
                 colour: hsl(signals.length*60, 100, 50)
             },])
         }
 
 
-        if(demoSignal == 'even'){
+        if(demoSignal === 'even'){
             signals = this.emptyPlots();
 
             // Generating DC signal
@@ -1179,6 +1241,7 @@ export class FourierCoefficients extends React.Component {
                 frequency: signals.length,  
                 phase: 0,
                 values: this.generateDC(0,signals.length,0),
+                pathID: 'path_0', 
                 dragging: false,    
                 colour: hsl(signals.length*60, 100, 50)
             },])
@@ -1186,25 +1249,27 @@ export class FourierCoefficients extends React.Component {
             // Generating other sine waves
             for(let i = 0; i < 4; i++){
                 // Odd
-                if((i % 2) != 0 ){
+                if((i % 2) !== 0 ){
                     signals = signals.concat([{       
                         id: signals.length,
                         amplitude: 1,                
                         frequency: signals.length,   
                         phase: 0,
                         values: this.generateSignal(1,signals.length,0),
+                        pathID: 'path_'.concat(i.toString(10)), 
                         dragging: false,    
                         colour: hsl(signals.length*60, 100, 50)
                     },])
                 }
                 // Even
-                if((i % 2) == 0 ){
+                if((i % 2) === 0 ){
                     signals = signals.concat([{       
                         id: signals.length,
                         amplitude: 0,                
                         frequency: signals.length,   
                         phase: 0,
                         values: this.generateSignal(0,signals.length,0),
+                        pathID: 'path_'.concat(i.toString(10)), 
                         dragging: false,    
                         colour: hsl(signals.length*60, 100, 50)
                     },])
@@ -1213,7 +1278,7 @@ export class FourierCoefficients extends React.Component {
             }
         }
 
-        if(demoSignal == 'odd'){
+        if(demoSignal === 'odd'){
             signals = this.emptyPlots();
 
             // Generating DC signal
@@ -1223,6 +1288,7 @@ export class FourierCoefficients extends React.Component {
                 frequency: signals.length,  
                 phase: 0,
                 values: this.generateDC(0,signals.length,0),
+                pathID: 'path_0', 
                 dragging: false,    
                 colour: hsl(signals.length*60, 100, 50)
             },])
@@ -1230,25 +1296,27 @@ export class FourierCoefficients extends React.Component {
             // Generating other sine waves
             for(let i = 0; i < 4; i++){
                 // Odd
-                if((i % 2) != 0 ){
+                if((i % 2) !== 0 ){
                     signals = signals.concat([{       
                         id: signals.length,
                         amplitude: 0,                
                         frequency: signals.length,   
                         phase: 0,
                         values: this.generateSignal(0,signals.length,0),
+                        pathID: 'path_'.concat(i.toString(10)), 
                         dragging: false,    
                         colour: hsl(signals.length*60, 100, 50)
                     },])
                 }
                 // Even
-                if((i % 2) == 0 ){
+                if((i % 2) === 0 ){
                     signals = signals.concat([{       
                         id: signals.length,
                         amplitude: 1,                
                         frequency: signals.length,   
                         phase: 0,
                         values: this.generateSignal(1,signals.length,0),
+                        pathID: 'path_'.concat(i.toString(10)), 
                         dragging: false,    
                         colour: hsl(signals.length*60, 100, 50)
                     },])
@@ -1257,7 +1325,7 @@ export class FourierCoefficients extends React.Component {
             }
         }
 
-        if(demoSignal == 'triangle'){
+        if(demoSignal === 'triangle'){
             signals = this.emptyPlots();
 
             // Generating DC signal
@@ -1267,6 +1335,7 @@ export class FourierCoefficients extends React.Component {
                 frequency: signals.length,  
                 phase: 0,
                 values: this.generateDC(0,signals.length,0),
+                pathID: 'path_0',  
                 dragging: false,    
                 colour: hsl(signals.length*60, 100, 50)
             },])
@@ -1275,11 +1344,8 @@ export class FourierCoefficients extends React.Component {
             let alternate = true;
             for(let i = 1; i < 20; i++){
                 // Odd
-                if((i % 2) != 0 ){
-                    
-                    let n = 2*i + 1;
-                    // let amp = (8/ Math.pow(Math.PI,2))*(1/Math.pow(n,2));
-                    let amp = (10/Math.pow(n,2));
+                if((i % 2) !== 0 ){
+                    let amp = (8/Math.pow(Math.PI,2))*(1/Math.pow(i,2));
 
                     // Non-phase shifted harmonic
                     if(alternate){
@@ -1289,11 +1355,13 @@ export class FourierCoefficients extends React.Component {
                             frequency: signals.length,   
                             phase: 0,
                             values: this.generateSignal(amp,signals.length,0),
+                            pathID: 'path_'.concat(i.toString(10)), 
                             dragging: false,    
                             colour: hsl(signals.length*60, 100, 50)
                         },])
                         alternate = !alternate; 
                     }
+                    // Phase shifted harmonic
                     else if(!alternate){
                         signals = signals.concat([{       
                             id: signals.length,
@@ -1301,6 +1369,7 @@ export class FourierCoefficients extends React.Component {
                             frequency: signals.length,   
                             phase: 180,
                             values: this.generateSignal(amp,signals.length, 180),
+                            pathID: 'path_'.concat(i.toString(10)), 
                             dragging: false,    
                             colour: hsl(signals.length*60, 100, 50)
                         },])
@@ -1309,13 +1378,14 @@ export class FourierCoefficients extends React.Component {
                     
                 }
                 // Even
-                if((i % 2) == 0 ){
+                if((i % 2) === 0 ){
                     signals = signals.concat([{       
                         id: signals.length,
                         amplitude: 0,                
                         frequency: signals.length,   
                         phase: 0,
                         values: this.generateSignal(0,signals.length,0),
+                        pathID: 'path_'.concat(i.toString(10)), 
                         dragging: false,    
                         colour: hsl(signals.length*60, 100, 50)
                     },])
@@ -1324,7 +1394,7 @@ export class FourierCoefficients extends React.Component {
             }
         }
 
-        if(demoSignal == 'square'){
+        if(demoSignal === 'square'){
             signals = this.emptyPlots();
 
             // Generating DC signal
@@ -1334,6 +1404,7 @@ export class FourierCoefficients extends React.Component {
                 frequency: signals.length,  
                 phase: 0,
                 values: this.generateDC(0,signals.length,0),
+                pathID: 'path_0', 
                 dragging: false,    
                 colour: hsl(signals.length*60, 100, 50)
             },])
@@ -1342,7 +1413,7 @@ export class FourierCoefficients extends React.Component {
 
             for(let i = 1; i < 25; i++){
                 // Odd
-                if((i % 2) != 0 ){
+                if((i % 2) !== 0 ){
                     
                     let amp = (4/Math.PI)*(1/i);
 
@@ -1352,19 +1423,21 @@ export class FourierCoefficients extends React.Component {
                         frequency: signals.length,   
                         phase: 0,
                         values: this.generateSignal(amp,signals.length,0),
+                        pathID: 'path_'.concat(i.toString(10)), 
                         dragging: false,    
                         colour: hsl(signals.length*60, 100, 50)
                     },])    
 
                 }
                 // Even
-                if((i % 2) == 0 ){
+                if((i % 2) === 0 ){
                     signals = signals.concat([{       
                         id: signals.length,
                         amplitude: 0,                
                         frequency: signals.length,   
                         phase: 0,
                         values: this.generateSignal(0,signals.length,0),
+                        pathID: 'path_'.concat(i.toString(10)), 
                         dragging: false,    
                         colour: hsl(signals.length*60, 100, 50)
                     },])
@@ -1373,7 +1446,7 @@ export class FourierCoefficients extends React.Component {
             }
         }
 
-        if(demoSignal == 'sawtooth'){
+        if(demoSignal === 'sawtooth'){
             signals = this.emptyPlots();
 
             // Generating DC signal
@@ -1383,6 +1456,7 @@ export class FourierCoefficients extends React.Component {
                 frequency: signals.length,  
                 phase: 0,
                 values: this.generateDC(0,signals.length,0),
+                pathID: 'path_0', 
                 dragging: false,    
                 colour: hsl(signals.length*60, 100, 50)
             },])
@@ -1394,7 +1468,7 @@ export class FourierCoefficients extends React.Component {
                 let amp = (4/Math.PI)*(1/i);
 
                 // Odd
-                if((i % 2) != 0 ){    
+                if((i % 2) !== 0 ){    
 
                     signals = signals.concat([{       
                         id: signals.length,
@@ -1402,18 +1476,20 @@ export class FourierCoefficients extends React.Component {
                         frequency: signals.length,   
                         phase: 180,
                         values: this.generateSignal(amp,signals.length,180),
+                        pathID: 'path_'.concat(i.toString(10)), 
                         dragging: false,    
                         colour: hsl(signals.length*60, 100, 50)
                     },])    
                 }
                 // Even
-                if((i % 2) == 0 ){
+                if((i % 2) === 0 ){
                     signals = signals.concat([{       
                         id: signals.length,
                         amplitude: amp,                
                         frequency: signals.length,   
                         phase: 0,
                         values: this.generateSignal(amp,signals.length,0),
+                        pathID: 'path_'.concat(i.toString(10)), 
                         dragging: false,    
                         colour: hsl(signals.length*60, 100, 50)
                     },])
@@ -1519,7 +1595,7 @@ export class FourierCoefficients extends React.Component {
                             demoSignal = {this.state.demoSignal}
                             onChange = {(event) => this.handleChange(event)}
                             onAdd = {(amplitude, phase) => this.addSignal(amplitude, phase)}
-                            onRemove = {(i) => this.removeSignal(i)}
+                            onRemove = {(signalID) => this.removeSignal(signalID)}
                             onDemoSignal = {(event) => this.handleDemoSignal(event)}
                         />
                     

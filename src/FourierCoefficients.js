@@ -16,10 +16,9 @@ function Dials(props) {
                             <p>This is the control panel to adjust signal properties.</p>
                             <p>Try adjusting the Amplitude and Phase!</p>
                         </span>
-                    
                 </div>
                 
-                <div>ID: {props.signal.id}</div>
+                <div>Fundamental Frequency Multiple: {props.signal.id}</div>
                 <button id = "remove-signal" onClick={(signalID) => props.onRemove(props.signal.id)}> Remove Signal </button>
                 <div> Colour </div>
                 <svg height = "40" width = "20">
@@ -32,6 +31,7 @@ function Dials(props) {
                         strokeWidth="1"
                     />
                 </svg>
+
             </div>
             <div className={styles.signal_props}>
                 <div>Amplitude: {props.signal.amplitude.toFixed(2)}</div>
@@ -89,6 +89,10 @@ function Dials(props) {
                     />
                 </div>        
             </div>
+
+            <div className={styles.signal_animate}>
+                <button id = "animate-signal" align-content = "center" onClick={(signalID) => props.onAnimate(props.signal.id)}> Animate Signal </button>
+            </div>
         </div>
     );
 }
@@ -101,6 +105,7 @@ class Controls extends React.Component {
                 signal = {signal}
                 onChange = {(event) => this.props.onChange(event)}
                 onRemove = {(i) => this.props.onRemove(i)}
+                onAnimate = {(i) => this.props.onAnimate(i)}
             />
         );
     }
@@ -139,6 +144,15 @@ class Controls extends React.Component {
                         <option value="square">Square Wave Approx</option>
                         <option value="sawtooth">Sawtooth Wave Approx</option>
                     </select>
+
+                    <div style = {{gridRow:"3"}}>
+                        <label>Default View:</label> 
+                        <input type="checkbox" id="defaultViewCheckBox" onClick={(event) => this.props.onToggleView(event)} />
+                    </div>
+                    <div style = {{gridRow:"3"}}>
+                        <label>Full View:</label> 
+                        <input type="checkbox" id="fullViewCheckBox" onClick={(event) => this.props.onToggleView(event)} />
+                    </div>
                 </div>
                 {signalList}
             </div>
@@ -152,17 +166,26 @@ function FourierCirclesMagPos(props) {
     let plotHeight = 0.8*divHeight;
     let plotWidth = 0.8*divWidth;
 
+    let strokeWidth
+    if(props.signal.highlight){
+        strokeWidth = "2" 
+    }
+    else{
+        strokeWidth = "1" 
+    }
+
     return(
         <circle
+            className ={styles.fourierCircles}
             id = {"circle_mag_"+props.signal.id}
             signal_id = {props.signal.id}
-            cx = {(props.signal.id)*(plotWidth/8)}
+            cx = {(props.signal.id)*(plotWidth/ (props.fourierMultiples * 2))}
             cy = {(props.signal.amplitude)*(plotHeight/8)}
             transform={"translate(" + divWidth/2 +"," + divHeight/2 +") scale(1,-1)"}
             r = {10}
             fill = {props.signal.colour}
             stroke = "black"
-            strokeWidth="1"
+            strokeWidth= {strokeWidth}
         />
     );
 }
@@ -173,17 +196,25 @@ function FourierCirclesMagNeg(props) {
     let plotHeight = 0.8*divHeight;
     let plotWidth = 0.8*divWidth;
 
+    let strokeWidth
+    if(props.signal.highlight){
+        strokeWidth = "2" 
+    }
+    else{
+        strokeWidth = "1" 
+    }
+
     return(
         <circle
             id = {"circle_mag_-"+props.signal.id}
             signal_id = {props.signal.id}
-            cx = {(props.signal.id)*-(plotWidth/8)} // 8 is because our x-axis is divided into 8 sections 
+            cx = {(props.signal.id)*-(plotWidth/(props.fourierMultiples * 2))} // 8 is because our x-axis is divided into 8 sections 
             cy = {(props.signal.amplitude)*(plotHeight/8)}
             transform={"translate(" + divWidth/2 +"," + divHeight/2 +") scale(1,-1)"}
             r = {10}
             fill = {props.signal.colour}
             stroke = "black"
-            strokeWidth="1"
+            strokeWidth={strokeWidth}
         />
     );
 }
@@ -194,17 +225,25 @@ function FourierCirclesPhasePos(props) {
     let plotHeight = 0.8*divHeight;
     let plotWidth = 0.8*divWidth;
 
+    let strokeWidth
+    if(props.signal.highlight){
+        strokeWidth = "2" 
+    }
+    else{
+        strokeWidth = "1" 
+    }
+
     return(
         <circle
             id = {"circle_phase_+"+props.signal.id}
             signal_id = {props.signal.id}
-            cx = {(props.signal.id)*(plotWidth/8)} // 8 is because our x-axis is divided into 8 sections 
+            cx = {(props.signal.id)*(plotWidth/ (props.fourierMultiples * 2))} 
             cy = {(props.signal.phase)*(plotHeight/360)}
             transform={"translate(" + divWidth/2 +"," + divHeight/2 +") scale(1,-1)"}
             r = {10}
             fill = {props.signal.colour}
             stroke = "black"
-            strokeWidth="1"
+            strokeWidth={strokeWidth}
         />
     );
 }
@@ -215,17 +254,25 @@ function FourierCirclesPhaseNeg(props) {
     let plotHeight = 0.8*divHeight;
     let plotWidth = 0.8*divWidth;
 
+    let strokeWidth
+    if(props.signal.highlight){
+        strokeWidth = "2" 
+    }
+    else{
+        strokeWidth = "1" 
+    }
+
     return(
         <circle
             id = {"circle_phase_-"+props.signal.id}
             signal_id = {props.signal.id}
-            cx = {(props.signal.id)*-(plotWidth/8)} // 8 is because our x-axis is divided into 8 sections 
+            cx = {(props.signal.id)*-(plotWidth/ (props.fourierMultiples * 2))} 
             cy = {-(props.signal.phase)*(plotHeight/360)}
             transform={"translate(" + divWidth/2 +"," + divHeight/2 +") scale(1,-1)"}
             r = {10}
             fill = {props.signal.colour}
             stroke = "black"
-            strokeWidth="1"
+            strokeWidth={strokeWidth}
         />
     );
 }
@@ -237,24 +284,28 @@ class FourierMagPlot extends React.Component {
         this.width = 0;
     }
 
-    componentDidMount(){
-        // Only get dimensions when DOM is loaded
-        this.height = document.getElementById("fourierMagPlotsID").getBoundingClientRect().height;
-        this.width = document.getElementById("fourierMagPlotsID").getBoundingClientRect().width;
+    drawAxis(height, width, fourierMultiples){
 
         let FourierMagSvg = d3.select("#svgFourierMagPlot")
 
-        // Should probably check both axis if they exist before appending
-        if(!document.getElementById("x_axis_fourierMagPlot")){
-   
+        // if axis exists but we are redrawing
+        if(document.getElementById("x_axis_fourierMagPlot") || document.getElementById("y_axis_fourierMagPlot")){
+
+            // remove current axis
+            d3.select("#x_axis_fourierMagPlot").remove();
+            d3.select("#y_axis_fourierMagPlot").remove();
+        }
+
+            // Drawing new axis
+
             // Create Axis for Frequency Plot
             let xscale_freq = d3.scaleLinear()
-                    .domain([-4, 4]) // This needs to be dynamic
-                    .range([ (1/10)*this.width, (9/10)*this.width ]);
+                    .domain([-fourierMultiples, fourierMultiples]) // This needs to be dynamic
+                    .range([ (1/10)*width, (9/10)*width ]);
 
             let yscale_freq = d3.scaleLinear()
                     .domain([4,0]) // This needs to be dynamic
-                    .range([ (1/10)*this.height, (5/10)*this.height ]);
+                    .range([ (1/10)*height, (5/10)*height ]);
 
             // Add scales to axis
             const xAxisTicks = xscale_freq.ticks()
@@ -270,14 +321,7 @@ class FourierMagPlot extends React.Component {
             let y_axis_freq = d3.axisLeft(yscale_freq)
              .tickValues(yAxisTicks)
              .tickFormat(d3.format("d"));
-
-            FourierMagSvg.append("text")
-                         .attr("text-anchor", "middle")  
-                         .attr("x",this.width/2)
-                         .attr("y",this.height/20)
-                         .style("font-size", "16px") 
-                         .style("text-decoration", "underline")  
-                         .text("Fourier Magnitude Plot");
+            
 
             FourierMagSvg.append('g')
                          .attr("id","x_axis_fourierMagPlot")
@@ -290,21 +334,52 @@ class FourierMagPlot extends React.Component {
                          .attr("transform","translate(" + this.width/2 + ",0)")
                          .attr("pointer-events", "none")
                          .call(y_axis_freq); 
-        }
+        
+
     }
 
-    renderCirclePos(signal){
+    componentDidMount(){
+        // Get dimensions when DOM is loaded
+        this.height = document.getElementById("fourierMagPlotsID").getBoundingClientRect().height;
+        this.width = document.getElementById("fourierMagPlotsID").getBoundingClientRect().width;
+
+        let FourierMagSvg = d3.select("#svgFourierMagPlot")
+
+        FourierMagSvg.append("text")
+                         .attr("text-anchor", "middle")  
+                         .attr("x",this.width/2)
+                         .attr("y",this.height/20)
+                         .style("font-size", "16px") 
+                         .style("text-decoration", "underline")  
+                         .text("Fourier Magnitude Plot");
+
+        // First drawing of the axis (default view of 4 terms)
+        this.drawAxis(this.height, this.width, this.props.fourierMultiples);
+        
+    }
+
+    /*
+    componentDidUpdate(){
+        // Update dimensions when DOM is changed
+        this.height = document.getElementById("fourierMagPlotsID").getBoundingClientRect().height;
+        this.width = document.getElementById("fourierMagPlotsID").getBoundingClientRect().width;
+    }
+    */
+
+    renderCirclePos(signal, fourierMultiples){
         return(
             <FourierCirclesMagPos
                 signal = {signal}
+                fourierMultiples = {fourierMultiples}
             />
         );
     }
 
-    renderCircleNeg(signal){
+    renderCircleNeg(signal, fourierMultiples){
         return(
             <FourierCirclesMagNeg
                 signal = {signal}
+                fourierMultiples = {fourierMultiples}
             />
         );
     }
@@ -312,19 +387,24 @@ class FourierMagPlot extends React.Component {
     render(){
 
         const signals = this.props.signals;
-   
+        const fourierMultiples = this.props.fourierMultiples;
+
+        this.drawAxis(this.height, this.width, fourierMultiples)
+
            const circleList = [];
           
            for (let i=0; i < signals.length; i++){
+                // Render DC term
                 if(signals[i].id === 0){
                     circleList.push(
-                        this.renderCirclePos(signals[i]) 
+                        this.renderCirclePos(signals[i], fourierMultiples) 
                     )
                 }
+                // Render all other Fourier Terms
                 else{
                     circleList.push(
-                        this.renderCirclePos(signals[i]),
-                        this.renderCircleNeg(signals[i])
+                        this.renderCirclePos(signals[i], fourierMultiples),
+                        this.renderCircleNeg(signals[i], fourierMultiples)
                     )
                 }
            }                    
@@ -344,69 +424,93 @@ class FourierPhasePlot extends React.Component {
         this.width = 0;
     }
 
-    componentDidMount(){
-        // Only get dimensions when DOM is loaded
-        this.height = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().height;
-        this.width = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().width;
+    drawAxis(height, width, fourierMultiples){
 
-        let FourierPhaseSvg = d3.select("#svgFourierPhasePlot")
+        let FourierMagSvg = d3.select("#svgFourierPhasePlot")
 
-        // Should probably check both axis if they exist before appending
-        if(!document.getElementById("x_axis_fourierPhasePlot")){
-   
+        // if axis exists but we are redrawing
+        if(document.getElementById("x_axis_fourierPhasePlot") || document.getElementById("y_axis_fourierPhasePlot")){
+
+            // remove current axis
+            d3.select("#x_axis_fourierPhasePlot").remove();
+            d3.select("#y_axis_fourierPhasePlot").remove();
+        }
+
+            // Drawing new axis
+
             // Create Axis for Frequency Plot
             let xscale_freq = d3.scaleLinear()
-                    .domain([-4, 4]) // This needs to be dynamic
-                    .range([ (1/10)*this.width, (9/10)*this.width ]);
+                    .domain([-fourierMultiples, fourierMultiples]) // This needs to be dynamic
+                    .range([ (1/10)*width, (9/10)*width ]);
 
             let yscale_freq = d3.scaleLinear()
                     .domain([180,-180]) // This needs to be dynamic
-                    .range([ (1/10)*this.height, (9/10)*this.height ]);
+                    .range([ (1/10)*height, (9/10)*height ]);
 
             // Add scales to axis
             const xAxisTicks = xscale_freq.ticks()
                                      .filter(tick => Number.isInteger(tick));
+
+            const yAxisTicks = yscale_freq.ticks()
+                                     .filter(tick => Number.isInteger(tick))                         
  
             let x_axis_freq = d3.axisBottom(xscale_freq)
              .tickValues(xAxisTicks)
              .tickFormat(d3.format("d"));
 
-            let y_axis_freq = d3.axisLeft(yscale_freq);
+            let y_axis_freq = d3.axisLeft(yscale_freq)
+             .tickValues(yAxisTicks)
+             .tickFormat(d3.format("d"));
             
-            FourierPhaseSvg.append("text")
-                         .attr("text-anchor", "middle")  
-                         .attr("x",this.width/2)
-                         .attr("y",this.height/20)
-                         .style("font-size", "16px") 
-                         .style("text-decoration", "underline")  
-                         .text("Fourier Phase Plot"); 
 
-            FourierPhaseSvg.append('g')
+            FourierMagSvg.append('g')
                          .attr("id","x_axis_fourierPhasePlot")
                          .attr("transform","translate(0," + this.height/2 + ")")
                          .attr("pointer-events", "none")
                          .call(x_axis_freq)
 
-            FourierPhaseSvg.append('g')
+            FourierMagSvg.append('g')
                          .attr("id","y_axis_fourierPhasePlot")
                          .attr("transform","translate(" + this.width/2 + ",0)")
                          .attr("pointer-events", "none")
                          .call(y_axis_freq); 
-        }
+        
     }
 
-    renderCirclePos(signal){
+    componentDidMount(){
+        // Get dimensions when DOM is loaded
+        this.height = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().height;
+        this.width = document.getElementById("fourierPhasePlotsID").getBoundingClientRect().width;
+
+        let FourierMagSvg = d3.select("#svgFourierPhasePlot")
+
+        FourierMagSvg.append("text")
+                         .attr("text-anchor", "middle")  
+                         .attr("x",this.width/2)
+                         .attr("y",this.height/20)
+                         .style("font-size", "16px") 
+                         .style("text-decoration", "underline")  
+                         .text("Fourier Phase Plot");
+
+        // First drawing of the axis (default view of 4 terms)
+        this.drawAxis(this.height, this.width, this.props.fourierMultiples);
+        
+    }
+
+    renderCirclePos(signal, fourierMultiples){
         return(
             <FourierCirclesPhasePos
                 signal = {signal}
+                fourierMultiples = {fourierMultiples}
             />
         );
     }
 
-    renderCircleNeg(signal){
+    renderCircleNeg(signal, fourierMultiples){
         return(
             <FourierCirclesPhaseNeg
                 signal = {signal}
+                fourierMultiples = {fourierMultiples}
             />
         );
     }
@@ -414,6 +518,9 @@ class FourierPhasePlot extends React.Component {
     render(){
 
         const signals = this.props.signals;
+        const fourierMultiples = this.props.fourierMultiples;
+
+        this.drawAxis(this.height, this.width, fourierMultiples)
     
            const circleList = []; 
            
@@ -421,13 +528,13 @@ class FourierPhasePlot extends React.Component {
 
                 if(i ===0){
                     circleList.push(
-                        this.renderCirclePos(this.props.signals[i]) 
+                        this.renderCirclePos(this.props.signals[i], fourierMultiples) 
                     )
                 }
                 else{
                     circleList.push(
-                        this.renderCirclePos(this.props.signals[i]),
-                        this.renderCircleNeg(this.props.signals[i])
+                        this.renderCirclePos(this.props.signals[i], fourierMultiples),
+                        this.renderCircleNeg(this.props.signals[i], fourierMultiples)
                     )
                 }
                
@@ -507,19 +614,38 @@ class SinePlot extends React.Component {
     
             // If exists, update
             if(document.getElementById(signals[i].pathID)){
+
+                let strokeWidth
+                if(signals[i].highlight){
+                    strokeWidth = 4;
+                }
+                else{
+                    strokeWidth = 2;
+                }
+
                 d3.select("#"+signals[i].pathID)
                     .attr("d", pathData)
-                    .attr("stroke", signals[i].colour)                      
+                    .attr("stroke", signals[i].colour)
+                    .attr("stroke-width", strokeWidth)                      
             }
             
             // Draws path if it doesn't exist
             if(!document.getElementById(signals[i].pathID)){
+                
+                let strokeWidth
+                if(signals[i].highlight){
+                    strokeWidth = 4;
+                }
+                else{
+                    strokeWidth = 2;
+                }
+
                 d3.select("#svgSinePlot").append("path")
                     .attr("id",signals[i].pathID)
                     .attr("d", pathData)
                     .attr("transform","translate(" + (1/10)*this.width + ")")
                     .attr("stroke", signals[i].colour)
-                    .attr("stroke-width", 2)
+                    .attr("stroke-width", strokeWidth)
                     .attr("fill", "none")
           }
         }
@@ -734,14 +860,17 @@ export class FourierCoefficients extends React.Component {
                 */
             ],
             demoSignal: 'select',
+            fourierMultiples: 4, // 4 is the default view, -4 to 4 multiples of fundamental frequency 
         };
         // This binding is necessary to make `this.` work in the callback   
         this.handleMouseDown = this.handleMouseDown.bind(this);
         this.handleMouseUp = this.handleMouseUp.bind(this);
         this.handleMouseMove = this.handleMouseMove.bind(this);
+        this.handleMouseOverFourier = this.handleMouseOverFourier.bind(this);
         this.handleMouseMoveFourierMag = this.handleMouseMoveFourierMag.bind(this);
         this.handleMouseMoveFourierPhase = this.handleMouseMoveFourierPhase.bind(this);
         this.handleDemoSignal = this.handleDemoSignal.bind(this);
+        this.redrawSignal = this.redrawSignal.bind(this);
     }
     
     addSignal(amplitude, phase){
@@ -766,6 +895,7 @@ export class FourierCoefficients extends React.Component {
                     draggingPhasePos: false,    
                     draggingPhaseNeg: false,  
                     colour: rgb(intensity,intensity,intensity),
+                    highlight: false,
                 },]);
                 // console.log(signals)
                 break;
@@ -785,6 +915,7 @@ export class FourierCoefficients extends React.Component {
                     draggingPhasePos: false,    
                     draggingPhaseNeg: false,  
                     colour: rgb(intensity,intensity,intensity),
+                    highlight: false,
                 }
 
                 signals.splice(i, 0, newSignal);
@@ -829,6 +960,37 @@ export class FourierCoefficients extends React.Component {
 
     
     }
+    
+    animateSignal(signalID){
+
+        const signals = this.state.signals;
+        console.log(signalID)    
+
+        // finding the signal
+        let index;
+        for(index = 0; index < signals.length; index++){
+            if(signals[index].id === signalID){
+                break
+            }
+        }
+
+        window.requestAnimationFrame(this.redrawSignal.bind(this, signals, index));
+        
+    }
+
+    redrawSignal(signals, index){
+        /* Remove the signal image */
+
+        // Find the pathID and delete from DOM
+        d3.select("#"+signals[index].pathID).remove();
+        
+        signals[index].phase += 1; 
+
+        this.setState({
+            signals: signals,
+        });
+    }
+
 
     generateSignal(amplitude, frequency, phase){
         // Generating path data
@@ -862,7 +1024,7 @@ export class FourierCoefficients extends React.Component {
         */
         for(let i = x_offset; i< plotWidth; i++)
         {
-            points[i] = [i, scale*amplitude*Math.sin(Ts*frequency*i + (phase * (Math.PI / 180) )) + (divHeight/2 + y_offset)];
+            points[i] = [i, scale*amplitude*Math.cos(Ts*frequency*i + (phase * (Math.PI / 180) )) + (divHeight/2 + y_offset)];
         }
         // console.log("Plot Length", points.length)
 
@@ -961,7 +1123,6 @@ export class FourierCoefficients extends React.Component {
         );
 
     }
-
     
     handleMouseDown(e){
         console.log("clicked")
@@ -970,7 +1131,8 @@ export class FourierCoefficients extends React.Component {
         e.stopPropagation()
 
         const elementID = e.target.getAttribute('id');
-
+        
+        // sanity check
         if(elementID !== null){
 
             const condition = elementID.includes("circle_");
@@ -1020,6 +1182,7 @@ export class FourierCoefficients extends React.Component {
 
         const elementID = e.target.getAttribute('id');
 
+        // sanity check
         if(elementID !== null){
 
             // set all signals dragging to false
@@ -1092,6 +1255,7 @@ export class FourierCoefficients extends React.Component {
         
         const elementID = e.target.getAttribute('id');
 
+        // sanity check
         if(elementID !== null){
 
                 const signals = this.state.signals;
@@ -1257,6 +1421,87 @@ export class FourierCoefficients extends React.Component {
         }
     }
 
+    handleMouseOverFourier(e){
+        // console.log(e);
+        e.stopPropagation()
+        e.preventDefault()
+        
+        const elementID = e.target.getAttribute('id');
+        console.log(elementID);
+        
+        // sanity check
+        if(elementID !== null){
+
+            const condition = elementID.includes("circle_");
+            const signals = this.state.signals;
+
+            // if a mouseover was over a circle 
+            if(condition){
+
+                console.log('circle mouse over!')
+                
+                const signalID = parseInt(e.target.getAttribute('signal_id')); // Signal ID Number
+                const circleID = e.target.getAttribute('id'); // Circle ID 
+
+                // Finding signal array's index from signal id
+                let index;
+                for(index = 0; index < signals.length; index++){
+                    if(signals[index].id === signalID){
+                         
+                        break
+                    }
+                }
+                signals[index].highlight = true;
+            }
+
+            // if the mouseover is not over a circle
+            else {
+                // Set all highlight to false
+                for(let n = 0; n < signals.length; n++){
+                    signals[n].highlight = false;
+                }  
+            }
+
+            this.setState({
+                signals: signals,   
+            });
+        }
+    }
+
+    toggleView(e){
+        console.log(e.target.getAttribute('id'))
+
+        const checkBoxID = e.target.getAttribute('id');
+        
+        // Set Fourier Plots to Default View
+        if(checkBoxID === "defaultViewCheckBox"){
+            document.getElementById('fullViewCheckBox').checked = false;
+            
+            this.setState({
+                fourierMultiples: 4,
+            });
+        }
+
+        // Set Fourier Plots to Full View
+        if(checkBoxID === "fullViewCheckBox"){
+            document.getElementById('defaultViewCheckBox').checked = false;
+        
+            const fourierMultiples = this.state.signals.length - 1; // -1 because of DC term
+
+            // Only change to full view if there are more than 4 Fourier Terms
+            if(fourierMultiples > 4){
+                this.setState({
+                    fourierMultiples: fourierMultiples,
+                });
+            }
+            else{
+                this.setState({
+                    fourierMultiples: 4,
+                });
+            }
+        }
+    }
+
     emptyPlots(){
         let signals = this.state.signals;
 
@@ -1299,6 +1544,7 @@ export class FourierCoefficients extends React.Component {
                 draggingPhasePos: false, 
                 draggingPhaseNeg: false,
                 colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                highlight: false,
             },])
 
             // Generating other sine waves
@@ -1314,6 +1560,7 @@ export class FourierCoefficients extends React.Component {
                 draggingPhasePos: false, 
                 draggingPhaseNeg: false, 
                 colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                highlight: false,
             },])
         }
 
@@ -1334,6 +1581,7 @@ export class FourierCoefficients extends React.Component {
                 draggingPhasePos: false, 
                 draggingPhaseNeg: false,    
                 colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                highlight: false,
             },])
 
             // Generating other sine waves
@@ -1352,6 +1600,7 @@ export class FourierCoefficients extends React.Component {
                         draggingPhasePos: false, 
                         draggingPhaseNeg: false,     
                         colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                        highlight: false,
                     },])
                 }
                 // Even
@@ -1368,6 +1617,7 @@ export class FourierCoefficients extends React.Component {
                         draggingPhasePos: false, 
                         draggingPhaseNeg: false,  
                         colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                        highlight: false,
                     },])
                 }
                     
@@ -1390,6 +1640,7 @@ export class FourierCoefficients extends React.Component {
                 draggingPhasePos: false, 
                 draggingPhaseNeg: false,    
                 colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                highlight: false,
             },])
 
             // Generating other sine waves
@@ -1408,6 +1659,7 @@ export class FourierCoefficients extends React.Component {
                         draggingPhasePos: false, 
                         draggingPhaseNeg: false,   
                         colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                        highlight: false,
                     },])
                 }
                 // Even
@@ -1424,6 +1676,7 @@ export class FourierCoefficients extends React.Component {
                         draggingPhasePos: false, 
                         draggingPhaseNeg: false,   
                         colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                        highlight: false,
                     },])
                 }
                     
@@ -1446,6 +1699,7 @@ export class FourierCoefficients extends React.Component {
                 draggingPhasePos: false, 
                 draggingPhaseNeg: false,     
                 colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                highlight: false,
             },])
 
             // Generating other sine waves
@@ -1468,6 +1722,7 @@ export class FourierCoefficients extends React.Component {
                             draggingPhasePos: false, 
                             draggingPhaseNeg: false,   
                             colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                            highlight: false,
                         },])
                         alternate = !alternate; 
                     }
@@ -1477,13 +1732,14 @@ export class FourierCoefficients extends React.Component {
                             id: signals.length,
                             amplitude: amplitude,                
                             frequency: signals.length,   
-                            phase: 180,
+                            phase: 0,
                             values: this.generateSignal(amplitude,signals.length, 180),
                             pathID: 'path_'.concat(i.toString(10)), 
                             draggingMag: false,    
                             draggingPhasePos: false, 
                             draggingPhaseNeg: false,    
                             colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                            highlight: false,
                         },])
                         alternate = !alternate; 
                     }    
@@ -1504,6 +1760,7 @@ export class FourierCoefficients extends React.Component {
                         draggingPhasePos: false, 
                         draggingPhaseNeg: false,    
                         colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                        highlight: false,
                     },])
                 }
                     
@@ -1526,6 +1783,7 @@ export class FourierCoefficients extends React.Component {
                 draggingPhasePos: false, 
                 draggingPhaseNeg: false,  
                 colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                highlight: false,
             },])
 
             // Generating other sine waves
@@ -1547,6 +1805,7 @@ export class FourierCoefficients extends React.Component {
                         draggingPhasePos: false, 
                         draggingPhaseNeg: false,     
                         colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                        highlight: false,
                     },])    
 
                 }
@@ -1566,6 +1825,7 @@ export class FourierCoefficients extends React.Component {
                         draggingPhasePos: false, 
                         draggingPhaseNeg: false,    
                         colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                        highlight: false,
                     },])
                 }
                     
@@ -1588,6 +1848,7 @@ export class FourierCoefficients extends React.Component {
                 draggingPhasePos: false, 
                 draggingPhaseNeg: false,     
                 colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                highlight: false,
             },])
 
             // Generating other sine waves
@@ -1609,6 +1870,7 @@ export class FourierCoefficients extends React.Component {
                         draggingPhasePos: false, 
                         draggingPhaseNeg: false,    
                         colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                        highlight: false,
                     },])    
                 }
                 // Even
@@ -1624,6 +1886,7 @@ export class FourierCoefficients extends React.Component {
                         draggingPhasePos: false, 
                         draggingPhaseNeg: false,    
                         colour: rgb((192 - 48*amplitude), (192 - 48*amplitude),(192 - 48*amplitude)),
+                        highlight: false,
                     },])
                 }
                     
@@ -1639,6 +1902,7 @@ export class FourierCoefficients extends React.Component {
     render() {
 
     const current = this.state.signals;
+    const fourierMultiples = this.state.fourierMultiples;
 
     return (
             <div className = {styles.container}>
@@ -1681,6 +1945,7 @@ export class FourierCoefficients extends React.Component {
                         onMouseDown = {(event) => this.handleMouseDown(event)}
                         onMouseUp = {(event) => this.handleMouseUp(event)}
                         onMouseMove = {(event) => this.handleMouseMoveFourierMag(event)}
+                        onMouseOver = {(event) => this.handleMouseOverFourier(event)}
 
                             style = {{
                                 position: "relative", 
@@ -1695,6 +1960,7 @@ export class FourierCoefficients extends React.Component {
                         
                             <FourierMagPlot
                                 signals = {current}
+                                fourierMultiples = {fourierMultiples}
                             />
                         </svg>
                     </div>
@@ -1704,6 +1970,7 @@ export class FourierCoefficients extends React.Component {
                             onMouseDown = {(event) => this.handleMouseDown(event)}
                             onMouseUp = {(event) => this.handleMouseUp(event)}
                             onMouseMove = {(event) => this.handleMouseMoveFourierPhase(event)}  
+                            onMouseOver = {(event) => this.handleMouseOverFourier(event)}
                             style = {{
                                 position: "relative", 
                                 top: "0%",
@@ -1715,6 +1982,7 @@ export class FourierCoefficients extends React.Component {
                         
                             <FourierPhasePlot
                                 signals = {current}
+                                fourierMultiples = {fourierMultiples}
                             />
                         </svg>
                     </div>         
@@ -1728,7 +1996,10 @@ export class FourierCoefficients extends React.Component {
                             onChange = {(event) => this.handleChange(event)}
                             onAdd = {(amplitude, phase) => this.addSignal(amplitude, phase)}
                             onRemove = {(signalID) => this.removeSignal(signalID)}
+                            onAnimate = {(signalID) => this.animateSignal(signalID)}
                             onDemoSignal = {(event) => this.handleDemoSignal(event)}
+                            onToggleView = {(event) => this.toggleView(event)}
+
                         />
                     
                 </div>

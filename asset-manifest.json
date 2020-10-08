@@ -1,22 +1,22 @@
 {
   "files": {
     "main.css": "/signals-web-app/static/css/main.1e9981f6.chunk.css",
-    "main.js": "/signals-web-app/static/js/main.a28cd2bd.chunk.js",
-    "main.js.map": "/signals-web-app/static/js/main.a28cd2bd.chunk.js.map",
+    "main.js": "/signals-web-app/static/js/main.8ae70c0a.chunk.js",
+    "main.js.map": "/signals-web-app/static/js/main.8ae70c0a.chunk.js.map",
     "runtime-main.js": "/signals-web-app/static/js/runtime-main.c911726b.js",
     "runtime-main.js.map": "/signals-web-app/static/js/runtime-main.c911726b.js.map",
-    "static/js/2.2aed198a.chunk.js": "/signals-web-app/static/js/2.2aed198a.chunk.js",
-    "static/js/2.2aed198a.chunk.js.map": "/signals-web-app/static/js/2.2aed198a.chunk.js.map",
+    "static/js/2.1152f352.chunk.js": "/signals-web-app/static/js/2.1152f352.chunk.js",
+    "static/js/2.1152f352.chunk.js.map": "/signals-web-app/static/js/2.1152f352.chunk.js.map",
     "index.html": "/signals-web-app/index.html",
-    "precache-manifest.876467125e89e9db22c24a4c986b96c3.js": "/signals-web-app/precache-manifest.876467125e89e9db22c24a4c986b96c3.js",
+    "precache-manifest.0eb36ae91f5a7489b057595b6e2e4aca.js": "/signals-web-app/precache-manifest.0eb36ae91f5a7489b057595b6e2e4aca.js",
     "service-worker.js": "/signals-web-app/service-worker.js",
     "static/css/main.1e9981f6.chunk.css.map": "/signals-web-app/static/css/main.1e9981f6.chunk.css.map",
-    "static/js/2.2aed198a.chunk.js.LICENSE.txt": "/signals-web-app/static/js/2.2aed198a.chunk.js.LICENSE.txt"
+    "static/js/2.1152f352.chunk.js.LICENSE.txt": "/signals-web-app/static/js/2.1152f352.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.c911726b.js",
-    "static/js/2.2aed198a.chunk.js",
+    "static/js/2.1152f352.chunk.js",
     "static/css/main.1e9981f6.chunk.css",
-    "static/js/main.a28cd2bd.chunk.js"
+    "static/js/main.8ae70c0a.chunk.js"
   ]
 }

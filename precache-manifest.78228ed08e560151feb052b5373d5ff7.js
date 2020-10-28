@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "8aaeec355cc2e5425f4ab4640ed17227",
+    "revision": "979ff13879e4be34fa517776a18c3e01",
     "url": "/signals-web-app/index.html"
   },
   {
-    "revision": "530014a8e1fe6767f24e",
+    "revision": "c8e7ea2153ed9577ce56",
     "url": "/signals-web-app/static/css/main.688fcd95.chunk.css"
   },
   {
@@ -16,8 +16,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/signals-web-app/static/js/2.1152f352.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "530014a8e1fe6767f24e",
-    "url": "/signals-web-app/static/js/main.187d42bb.chunk.js"
+    "revision": "c8e7ea2153ed9577ce56",
+    "url": "/signals-web-app/static/js/main.98aad27a.chunk.js"
   },
   {
     "revision": "652c5d2703387bf2fef3",

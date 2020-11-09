@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-// import logo from './logo.svg';
 import styles from './App.module.css';
-import * as d3 from "d3";
+import Typography from '@material-ui/core/Typography';
 import {
   BrowserRouter as Router,
   Switch,
@@ -11,54 +10,17 @@ import {
 } from "react-router-dom";
 
 import {FourierCoefficients} from './FourierCoefficients.js'
-import {FrequencyDomain} from './FrequencyDomain.js'
 
-/*
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
-*/
-
-
-/* Known Bugs:
-- removeSignal() only works if you starting removing from the last signal
-- if you move/drag the mouse too fast the circle doesn't catch up
-- phase dial for DC signal updates amplitude when it's not meant to
-- negative phase circle is meant to move in opposite direction when dragged (cartersian coordinate problem)
-
-
-- Changing frequency does update the signal (when it's not meant to)
-^ But this is deliberate because we haven't updated FreqPlot functionality to fit with Fourier Plots
-*/
-
-
-
+// "Highest" Parent class App. Manages the website's navigation and routing
 function App() {
     return (
       <div className="App">
         <header className="App-header">
         </header>
         <Router>
-          <div className = {styles.navbar}>
+          <Typography className = {styles.navbar}>
                       <div className = {styles.tab} id="home">  
-                        <Link to="/">Home</Link>
+                        <Link to="/signals-web-app/">Home</Link>
                       </div>
                       <div className = {styles.tab}> 
                         <Link to="/about">About</Link>
@@ -66,10 +28,7 @@ function App() {
                       <div className = {styles.tab}>  
                         <Link to="/FourierCoefficients">Fourier Coefficients</Link>
                       </div>
-                      <div className = {styles.tab}>  
-                        <Link to="/FrequencyDomain">Frequency Domain</Link>
-                      </div>
-          </div>
+          </Typography>
             {/*
               A <Switch> looks through all its children <Route>
               elements and renders the first one whose path
@@ -79,7 +38,7 @@ function App() {
             */}
 
             <Switch>
-              <Route exact path="/">
+              <Route exact path="/signals-web-app/">
                 <Home />
               </Route>
               <Route path="/about">
@@ -88,9 +47,6 @@ function App() {
               <Route path="/FourierCoefficients">
                 <FourierCoefficients />
               </Route>
-              <Route path="/FrequencyDomain">
-                <FrequencyDomain />
-              </Route>
             </Switch>
   
         </Router>
@@ -98,6 +54,7 @@ function App() {
     );
   }
 
+  // Returns HTML code for the "About" page
   function About() {
     return (
       <div className = {styles.centertext}>  
@@ -120,6 +77,7 @@ function App() {
     );
   }
   
+  // Returns HTML code for the "Home" page
   class Home extends React.Component{
     render() {
 

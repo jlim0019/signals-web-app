@@ -1054,7 +1054,7 @@ class SumPlot extends React.Component {
                          .attr("y",this.height/20)
                          .style("font-size", "16px") 
                          .style("text-decoration", "underline")  
-                         .text("Fourier Phase Plot");
+                         .text("Sum of Signals Plot");
 
         // Updated drawing of the axis
         this.drawAxis(this.height, this.width);

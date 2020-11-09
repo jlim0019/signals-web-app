@@ -147,9 +147,6 @@ function Dials(props) {
                 </div>
             </Box>
 
-            <div className={styles.signal_animate}>
-                <button id = "animate-signal" align-content = "center" onClick={(signalID) => props.onAnimate(props.signal.id)}> Animate Signal </button>
-            </div>
             
         </Grid>
     );
@@ -170,7 +167,6 @@ class Controls extends React.Component {
                 signal = {signal}
                 onChange = {(event) => this.props.onChange(event)}
                 onRemove = {(i) => this.props.onRemove(i)}
-                onAnimate = {(i) => this.props.onAnimate(i)}
             />
         );
     }
@@ -534,30 +530,6 @@ class FourierMagPlot extends React.Component {
         
     }
 
-    // Updates the Fourier Magnitude plot axis when DOM is reloaded or updated  
-    componentDidUpdate(){
-        // Get dimensions when DOM is updated
-        this.height = document.getElementById("fourierMagPlotsID").getBoundingClientRect().height;
-        this.width = document.getElementById("fourierMagPlotsID").getBoundingClientRect().width;
-
-        d3.select("#fourierMagPlotTitleText").remove();
-        
-        let FourierMagSvg = d3.select("#svgFourierMagPlot")
-
-        FourierMagSvg.append("text")
-                         .attr("id","fourierMagPlotTitleText")
-                         .attr("text-anchor", "middle")  
-                         .attr("x",this.width/2)
-                         .attr("y",this.height/20)
-                         .style("font-size", "16px") 
-                         .style("text-decoration", "underline")  
-                         .text("Fourier Magnitude Plot");
-
-        // Updated drawing of the axis (default view of 4 terms)
-        this.drawAxis(this.height, this.width, this.props.fourierMultiples);
-        
-    }
-
     // Function component to call to render a positive Fourier Magnitude Coefficient 
     renderCirclePos(signal, fourierMultiples){
         return(
@@ -706,30 +678,6 @@ class FourierPhasePlot extends React.Component {
         
     }
 
-    // Updates the Fourier Magnitude plot axis when DOM is reloaded or updated
-    componentDidUpdate(){
-        // Get dimensions when DOM is updated
-        this.height = document.getElementById("fourierMagPlotsID").getBoundingClientRect().height;
-        this.width = document.getElementById("fourierMagPlotsID").getBoundingClientRect().width;
-
-        d3.select("#fourierPhasePlotTitleText").remove();
-        
-        let FourierPhaseSvg = d3.select("#svgFourierPhasePlot")
-
-        FourierPhaseSvg.append("text")
-                         .attr("id","fourierPhasePlotTitleText")
-                         .attr("text-anchor", "middle")  
-                         .attr("x",this.width/2)
-                         .attr("y",this.height/20)
-                         .style("font-size", "16px") 
-                         .style("text-decoration", "underline")  
-                         .text("Fourier Phase Plot");
-
-        // Updated drawing of the axis (default view of 4 terms)
-        this.drawAxis(this.height, this.width, this.props.fourierMultiples);
-        
-    }
-
     // Function component to call to render a positive Fourier Phase Coefficient 
     renderCirclePos(signal, fourierMultiples){
         return(
@@ -858,7 +806,6 @@ class CosinePlot extends React.Component {
         const svgCosinePlot = d3.select("#svgCosinePlot")
 
         svgCosinePlot.append("text")
-                    .attr("id","cosinePlotTitleText")
                     .attr("text-anchor", "middle")  
                     .attr("x",this.width/2)
                     .attr("y",this.height/20)
@@ -869,30 +816,6 @@ class CosinePlot extends React.Component {
         // Initial drawing of the axis 
         this.drawAxis(this.height, this.width);
 
-    }
-
-    // Updates the Cosine plot axis when DOM is reloaded or updated
-    componentDidUpdate(){
-        // Get dimensions when DOM is updated
-        this.height = document.getElementById("cosinePlotsID").getBoundingClientRect().height;
-        this.width = document.getElementById("cosinePlotsID").getBoundingClientRect().width;
-
-        d3.select("#cosinePlotTitleText").remove();
-        
-        let svgCosinePlot = d3.select("#svgCosinePlot")
-
-        svgCosinePlot.append("text")
-                         .attr("id","cosinePlotTitleText")
-                         .attr("text-anchor", "middle")  
-                         .attr("x",this.width/2)
-                         .attr("y",this.height/20)
-                         .style("font-size", "16px") 
-                         .style("text-decoration", "underline")  
-                         .text("Cosine Plots");
-
-        // Updated drawing of the axis
-        this.drawAxis(this.height, this.width);
-        
     }
 
     // Returns Cosine Plot HTML code to parent class 
@@ -1023,7 +946,6 @@ class SumPlot extends React.Component {
         const svgSumPlot = d3.select("#svgSumPlot")
 
         svgSumPlot.append("text")
-                .attr("id","sumPlotTitleText")
                 .attr("text-anchor", "middle")  
                 .attr("x",this.width/2)
                 .attr("y",this.height/20)
@@ -1035,32 +957,6 @@ class SumPlot extends React.Component {
         this.drawAxis(this.height, this.width);
 
     }
-
-    
-    // Updates the Sum of Signals plot axis when DOM is reloaded or updated
-    componentDidUpdate(){
-        // Get dimensions when DOM is updated
-        this.height = document.getElementById("svgSumPlot").getBoundingClientRect().height;
-        this.width = document.getElementById("svgSumPlot").getBoundingClientRect().width;
-
-        d3.select("#sumPlotTitleText").remove();
-        
-        let svgSumPlot = d3.select("#svgSumPlot")
-
-        svgSumPlot.append("text")
-                         .attr("id","sumPlotTitleText")
-                         .attr("text-anchor", "middle")  
-                         .attr("x",this.width/2)
-                         .attr("y",this.height/20)
-                         .style("font-size", "16px") 
-                         .style("text-decoration", "underline")  
-                         .text("Fourier Phase Plot");
-
-        // Updated drawing of the axis
-        this.drawAxis(this.height, this.width);
-        
-    }
-    
 
     // Returns Sum of Signals Plot HTML code to parent class 
     render(){
@@ -1159,9 +1055,7 @@ export class FourierCoefficients extends React.Component {
         this.handleMouseOverFourier = this.handleMouseOverFourier.bind(this);
         this.handleMouseMoveFourierMag = this.handleMouseMoveFourierMag.bind(this);
         this.handleMouseMoveFourierPhase = this.handleMouseMoveFourierPhase.bind(this);
-        this.handleMouseOverSignalControls = this.handleMouseOverSignalControls.bind(this);
         this.handleDemoSignal = this.handleDemoSignal.bind(this);
-        this.redrawSignal = this.redrawSignal.bind(this);
     }
     
     /* 
@@ -1254,121 +1148,6 @@ export class FourierCoefficients extends React.Component {
             signals: signals,
         });
     
-    }
-
-    animateSignal(signalID){
-
-        const signals = this.state.signals;
-        // console.log(signalID)    
-
-        // finding the signal
-        let index;
-        for(index = 0; index < signals.length; index++){
-            if(signals[index].id === signalID){
-                break
-            }
-        }
-
-        // window.requestAnimationFrame(this.redrawSignal.bind(this, signals, index));
-        
-        // If we're not animating, we animate the signal
-        // default value is false
-
-        /*
-        console.log(signals[index].animatingID)
-
-        if(signals[index].animatingID === null){
-            console.log('starting animation')
-            let animatingID = this.redrawSignal(signals,index)
-            signals[index].animatingID = animatingID
-        }
-        // If we're animating, we stop the animiation
-        else if(signals[index].animatingID !== null){
-            console.log('stopping animation')
-            window.cancelAnimationFrame(signals[index].animatingID);
-            signals[index].animatingID = null
-
-            this.setState({
-                signals: signals,
-            });
-        }
-        */
-
-        signals[index].animating = !signals[index].animating
-        this.redrawSignal(signals,index, signals[index].animating)
-
-        this.setState({
-            signals: signals,
-        });
-
-    }
-
-    redrawSignal(signals, index, animating){
-
-        /* Remove the signal image */
-        // Find the pathID and delete from DOM
-        d3.select("#"+signals[index].pathID).remove();
-        
-        // Incrementing signal phase
-        signals[index].phase += 1; 
-
-        // Looping phase back to -180 degrees after passing 180 degrees
-        if(signals[index].phase > 180){
-            signals[index].phase = - 180
-        }
-
-        // Recalculating and redrawing signal
-
-        // This may be a bit inefficient though?
-
-        // DC Case
-        
-        if(signals[index].id === 0){
-            signals[index].values = this.generateDC(signals[index].amplitude, signals[index].frequency, signals[index].phase)
-        }
-        else{
-            signals[index].values = this.generateSignal(signals[index].amplitude, signals[index].frequency, signals[index].phase)
-        }
-
-        // "Cycling" the signal values
-        // shift() removes the first item in the array and returns it
-        // push() then pushes this first item into the last element in the array
-        // signals[index].values.push(signals[index].values.shift())
-        
-        
-
-        // let animatingID = requestAnimationFrame(this.redrawSignal.bind(this, signals, index, animating))
-        
-        // console.log('request:', animatingID)
-        // console.log(animatingID)
-
-        console.log(animating);
-        if(animating === true){
-            // console.log('starting animation')
-            // let animatingID = this.redrawSignal(signals,index)
-
-            let animatingID = requestAnimationFrame(this.redrawSignal.bind(this, signals, index, animating))
-            
-            // signals[index].animating = true
-            this.setState({
-                signals: signals,
-            });
-        }
-        // If we're animating, we stop the animiation
-        else if(animating === false){
-            // console.log('stop:', animatingID)
-            console.log('stopping animation')
-
-            let animatingID = requestAnimationFrame(this.redrawSignal.bind(this, signals, index, animating))
-            cancelAnimationFrame(animatingID)
-            
-            // signals[index].animating = false
-        }
-
-            
-
-
-        // return animatingID
     }
     
     /*
@@ -1896,62 +1675,6 @@ export class FourierCoefficients extends React.Component {
         }
     }
 
-    handleMouseOverSignalControls(e){
-        const elementID = e.target.getAttribute('id');
-        console.log(elementID);
-
-        /*
-        // sanity check
-        if(elementID !== null){
-
-            const condition = elementID.includes("signal-controls-");
-            const signals = this.state.signals;
-
-            // if a mouseover was over a signal control panel 
-            if(condition){
-
-                console.log('signal mouse over!')
-                
-                const signalID = parseInt(e.target.getAttribute('signal_id')); // Signal ID Number
-
-                // Finding signal array's index from signal id
-                let index;
-                for(index = 0; index < signals.length; index++){
-                    if(signals[index].id === signalID){
-                         
-                        break
-                    }
-                }
-                signals[index].highlight = true;
-
-                let signalControlID = 'signal-controls-'.concat(signalID.toString())
-                console.log(signalControlID)
-                document.getElementById(signalControlID).style.opacity = 1;
-            }
-
-            // if the mouseover is not over a circle
-            else {
-                // Set all highlight to false
-
-                let signalControlID
-                for(let n = 0; n < signals.length; n++){
-                    signals[n].highlight = false;
-
-                    signalControlID = 'signal-controls-'.concat(n.toString())
-                    // Check if signal dials exists
-                    if(document.getElementById(signalControlID)){
-                        document.getElementById(signalControlID).style.opacity = 0.6;
-                    }
-                }  
-            }
-
-            this.setState({
-                signals: signals,   
-            });
-        }
-        */
-    }
-
 
     /*
     * Toggles between 'default' and 'full' view of the Fourier Magnitude and Phase Plots
@@ -2392,7 +2115,7 @@ export class FourierCoefficients extends React.Component {
 
                 </div>
 
-                <div className = {styles.controls} onMouseOver = {(event) => this.handleMouseOverSignalControls(event)}>
+                <div className = {styles.controls} >
         
                         <Controls
                             signals = {current}
